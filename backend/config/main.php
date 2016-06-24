@@ -31,6 +31,9 @@ return [
             'class' => '\yii\mongodb\Connection',
             'dsn' => 'mongodb://localhost:27017',
         ],
+        'CHelper' => [
+            'class' => '..\components\CHelper.php',
+        ],
         'urlManager' => [
             'scriptUrl' => '/backend/index.php',
             'class' => 'yii\web\UrlManager',
