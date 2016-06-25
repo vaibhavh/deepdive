@@ -91,16 +91,18 @@ class PenaltyController extends Controller {
         ini_set("memory_limit", "-1");
         error_reporting(E_ALL);
         ini_set("display_errors", 1);
-//        $integrated_devices = $this->getIntegratedDevices();
+        ini_set('max_execution_time', 86400);
         $auditPoints = $this->getAuditPoints();
         $ipslaRecords = $this->getIpslaRecords();
+        $packetDrop = $this->getPacketDrop();
+        $latency = $this->geLatency();
+
         $day = date('D');
 
         $db = Yii::$app->db_rjil;
-        $sql = "SELECT * FROM tbl_built_penalty_points";
+        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
         $command = $db->createCommand($sql);
         $penelty_points = $command->queryAll();
-
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
         $collection = $database->week_master;
@@ -130,6 +132,9 @@ class PenaltyController extends Controller {
                     }
 
                     if (empty($hostname)) {
+                        $packet_drop = 0;
+                        $latency_point = 0;
+
                         $data = [
                             'hostname' => $penelty_point['hostname'],
                             'loopback0' => $penelty_point['loopback0'],
@@ -148,25 +153,28 @@ class PenaltyController extends Controller {
                         $data['power'] = 0;
                         $data['optical_power'] = 0;
                         $data['module_temperature'] = 0;
-                        $data['packet_drop'] = 0;
+                        $data['packetloss'] = 0;
                         $data['latency'] = 0;
+
                         if (isset($ipslaRecords[$penelty_point['hostname']])) {
                             $ipsla_record = $ipslaRecords[$penelty_point['hostname']];
-                            $data['crc'] = $ipsla_record['crc'];
-                            $data['output_errors'] = $ipsla_record['output_errors'];
-                            $data['input_errors'] = $ipsla_record['input_errors'];
-                            $data['interface_resets'] = $ipsla_record['interface_resets'];
-                            $data['power'] = $ipsla_record['power'];
-                            $data['optical_power'] = $ipsla_record['optical_power'];
-                            $data['module_temperature'] = $ipsla_record['module_temperature'];
-                            $data['packetloss'] = $ipsla_record['packet_drop'];
-                            $data['latency'] = $ipsla_record['latency'];
+                            $data['crc'] = (int) $ipsla_record['crc'];
+                            $data['output_errors'] = (int) $ipsla_record['output_errors'];
+                            $data['input_errors'] = (int) $ipsla_record['input_errors'];
+                            $data['interface_resets'] = (int) $ipsla_record['interface_resets'];
+                            $data['power'] = (int) $ipsla_record['power'];
+                            $data['optical_power'] = (int) $ipsla_record['optical_power'];
+                            $data['module_temperature'] = (int) $ipsla_record['module_temperature'];
                         }
+                        if (isset($packetDrop[$penelty_point['hostname']]))
+                            $data['packetloss'] = (int) $packetDrop[$penelty_point['hostname']];
+                        if (isset($latency[$penelty_point['hostname']]))
+                            $data['latency'] = (int) $latency[$penelty_point['hostname']];
                         $data['audit_penalty'] = 0;
                         if (isset($auditPoints[$penelty_point['loopback0']]))
-                            $data['audit_penalty'] = $ipsla_record['latency'];
+                            $data['audit_penalty'] = (int) $auditPoints[$penelty_point['loopback0']];
+                        $data['table_name'] = $table_name;
                         $data['created_date'] = date("Y:m:d");
-
                         $collection->insert($data);
                         $data = array();
                     } else {
@@ -179,6 +187,10 @@ class PenaltyController extends Controller {
     }
 
     public function actionWeeklyData() {
+        ini_set("memory_limit", "-1");
+        error_reporting(E_ALL);
+        ini_set("display_errors", 1);
+        ini_set('max_execution_time', 86400);
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
         $collection = $database->week_master;
@@ -189,68 +201,109 @@ class PenaltyController extends Controller {
 
         $collection = $database->$table_name;
         $details = array();
-
-        $data = $collection->group(
-                ['hostname' => true, 'loopback0' => true], ["ios_compliance_status" => 0, 'bgp_available' => 0, 'isis_available' => 0, 'resilent_status' => 0,
-            'device_type' => 0, 'crc' => 0, 'input_errors' => 0, 'output_errors' => 0, 'interface_resets' => 0, 'power' => 0, 'optical_power' => 0, 'module_temperature' => 0,], //
-                new \MongoCode('function(doc, prev) { prev.ios_compliance_status += obj.ios_compliance_status;
-                                                     prev.bgp_available += obj.bgp_available;
-                                                     prev.isis_available += obj.isis_available; 
-                                                     prev.resilent_status += obj.resilent_status;
-                                                     prev.device_type = obj.device_type;
-                                                     prev.crc += obj.crc;
-                                                     prev.input_errors += obj.input_errors;
-                                                     prev.output_errors += obj.output_errors;
-                                                     prev.interface_resets += obj.interface_resets;
-                                                     prev.power += obj.power;
-                                                     prev.optical_power += obj.optical_power;
-                                                     prev.module_temperature += obj.module_temperature;}')
-        );
+        $pipeline = [
+            ['$limit' => 40000],
+            [
+                '$group' => [
+                    '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
+                    'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
+                    'bgp_available' => ['$sum' => '$bgp_available'],
+                    'isis_available' => ['$sum' => '$isis_available'],
+                    'resilent_status' => ['$sum' => '$resilent_status'],
+                    'device_type' => ['$first' => '$device_type'],
+                    'crc' => ['$sum' => '$crc'],
+                    'input_errors' => ['$sum' => '$input_errors'],
+                    'output_errors' => ['$sum' => '$output_errors'],
+                    'interface_resets' => ['$sum' => '$interface_resets'],
+                    'power' => ['$sum' => '$power'],
+                    'optical_power' => ['$sum' => '$optical_power'],
+                    'packetloss' => ['$sum' => '$packetloss'],
+                    'audit_penalty' => ['$sum' => '$audit_penalty'],
+                    'latency' => ['$sum' => '$latency'],
+                    'module_temperature' => ['$sum' => '$module_temperature'],
+                ],
+            ],
+        ];
+        $options = ['allowDiskUse' => true];
+        $data = $collection->aggregate($pipeline, $options);
+//        echo "<pre/>", print_r($data);
+//        die;
+//        $data = $collection->group(
+//                ['hostname' => true, 'loopback0' => true], ["ios_compliance_status" => 0, 'bgp_available' => 0, 'isis_available' => 0, 'resilent_status' => 0,
+//            'device_type' => 0, 'crc' => 0, 'input_errors' => 0, 'output_errors' => 0, 'interface_resets' => 0, 'power' => 0, 'optical_power' => 0, 'module_temperature' => 0, 'packetloss' => 0, 'latency' => 0, 'audit_penalty' => 0], //
+//                new \MongoCode('function(doc, prev) {
+//            prev.ios_compliance_status += obj . ios_compliance_status;
+//            prev.bgp_available += obj . bgp_available;
+//            prev.isis_available += obj . isis_available;
+//            prev.resilent_status += obj . resilent_status;
+//            prev.device_type = obj . device_type;
+//            prev.crc += obj . crc;
+//            prev.input_errors += obj . input_errors;
+//            prev.output_errors += obj . output_errors;
+//            prev.interface_resets += obj . interface_resets;
+//            prev.power += obj . power;
+//            prev.optical_power += obj . optical_power;
+//            prev.packetloss += obj . packetloss;
+//            prev.audit_penalty += obj . audit_penalty;
+//            prev.latency += obj . latency;
+//            prev.module_temperature += obj . module_temperature;
+//        }')
+//        );
 
         $details = array();
         $collection = $database->week_penalty_master;
         if (!empty($data)) {
-            foreach ($data['retval'] as $value) {
+            foreach ($data['result'] as $value) {
+
                 if (!empty($value)) {
-                    $is_exist = $collection->find(['hostname' => $value['hostname'], 'created_at' => date('Y:m:d')], ['hostname']);
+                    $is_exist = $collection->find(['hostname' => $value['_id']['hostname'], 'created_at' => date('Y:m:d')], ['hostname']);
                     $hostname = '';
                     foreach ($is_exist as $exist) {
                         $hostname = $exist['hostname'];
                     }
                     if (empty($hostname)) {
+                        $device_type = "CSS";
+                        if ($value['device_type'] == 'PAR')
+                            $device_type = "AG1";
+                        if (in_array($value['device_type'], ['CSS', 'AG1']))
+                            $device_type = $value['device_type'];
                         $data = [
-                            'hostname' => $value['hostname'],
-                            'loopback0' => $value['loopback0'],
-                            'device_type' => $value['device_type'],
-                            'ios_compliance_status' => $value['ios_compliance_status'],
-                            'bgp_available' => $value['bgp_available'],
-                            'isis_available' => $value['isis_available'],
-                            'resilent_status' => $value['resilent_status'],
-                            'crc' => $value['crc'],
-                            'input_errors' => $value['input_errors'],
-                            'output_errors' => $value['output_errors'],
-                            'interface_resets' => $value['interface_resets'],
-                            'power' => $value['power'],
-                            'optical_power' => $value['optical_power'],
-                            'module_temperature' => $value['module_temperature'],
+                            'hostname' => $value['_id']['hostname'],
+                            'loopback0' => $value['_id']['loopback0'],
+                            'device_type' => $device_type,
+                            'ios_compliance_status' => (int) $value['ios_compliance_status'],
+                            'bgp_available' => (int) $value['bgp_available'],
+                            'isis_available' => (int) $value['isis_available'],
+                            'resilent_status' => (int) $value['resilent_status'],
+                            'crc' => (int) $value['crc'],
+                            'input_errors' => (int) $value['input_errors'],
+                            'output_errors' => (int) $value['output_errors'],
+                            'interface_resets' => (int) $value['interface_resets'],
+                            'power' => (int) $value['power'],
+                            'optical_power' => (int) $value['optical_power'],
+                            'module_temperature' => (int) $value['module_temperature'],
+                            'packetloss' => (int) $value['packetloss'],
+                            'audit_penalty' => (int) $value['audit_penalty'],
+                            'latency' => (int) $value['latency'],
+                            'table_name' => $table_name,
                             'created_at' => date('Y:m:d'),
                         ];
+
                         $collection->insert($data);
                     } else {
-                        echo $value['hostname'] . " is already exist<br>";
+                        echo $value['_id']['hostname'] . " is already exist<br>";
                     }
                 }
             }
         }
+        die("done");
     }
 
     public function getIpslaRecords() {
         $db = Yii::$app->db_rjil;
-        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR')";
+        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
         $command = $db->createCommand($sql);
         $ipsla_points = $command->queryAll();
-        $packet_drop = $this->getPacketDrop();
-        $latency = $this->geLatency();
 
         $data = array();
         if (!empty($ipsla_points)) {
@@ -266,12 +319,7 @@ class PenaltyController extends Controller {
                         break;
                 }
                 if (!empty($type)) {
-                    $packet_drop = 0;
-                    $latency_point = 0;
-                    if (isset($packet_drop[$ipsla_point['host_name']]))
-                        $packet_drop = $packet_drop[$ipsla_point['host_name']];
-                    if (isset($latency[$ipsla_point['host_name']]))
-                        $latency_point = $latency[$ipsla_point['host_name']];
+
                     $data[$ipsla_point['host_name']] = [
                         'crc' => $ipsla_point['crc'],
                         'input_errors' => $ipsla_point['input_errors'],
@@ -280,8 +328,6 @@ class PenaltyController extends Controller {
                         'optical_power' => $ipsla_point['optical_power'],
                         'module_temperature' => $ipsla_point['module_temperature'],
                         'power' => $ipsla_point['power'],
-                        'packet_drop' => $packet_drop,
-                        'latency' => $latency_point,
                     ];
                 }
             }
@@ -291,9 +337,10 @@ class PenaltyController extends Controller {
 
     public function getPacketDrop() {
         $db = Yii::$app->db_rjil;
-        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' group by host_name";
+        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
         $command = $db->createCommand($sql);
         $ipsla_points = $command->queryAll();
+
         $data = array();
         if (!empty($ipsla_points)) {
             foreach ($ipsla_points as $value) {
@@ -305,7 +352,7 @@ class PenaltyController extends Controller {
 
     public function geLatency() {
         $db = Yii::$app->db_rjil;
-        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' group by host_name";
+        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
         $command = $db->createCommand($sql);
         $ipsla_latency_points = $command->queryAll();
         $data = array();
@@ -345,7 +392,7 @@ class PenaltyController extends Controller {
 
     public function getAuditPoints() {
         $db = Yii::$app->db_rjil;
-        $sql = "select penalty_counts,loopback0 from tbl_audit_penalty_points";
+        $sql = "select penalty_counts,loopback0 from tbl_audit_penalty_points WHERE date(created_dt)=date(now())";
         $command = $db->createCommand($sql);
         $auditResults = $command->queryAll();
         $auditPenalty = 0;
