@@ -19,21 +19,19 @@ use Yii;
  * @property integer $resilent_status
  * @property string $created_date
  */
-class PenaltyPoints extends \yii\db\ActiveRecord
-{
+class PenaltyPoints extends \yii\db\ActiveRecord {
+
     /**
      * @inheritdoc
      */
-    public static function tableName()
-    {
+    public static function tableName() {
         return 'penaltypoints';
     }
 
     /**
      * @inheritdoc
      */
-    public function rules()
-    {
+    public function rules() {
         return [
             [['hostname', 'loopback0', 'device_type', 'ios_compliance_status', 'ios_current_version', 'ios_built_version', 'bgp_available', 'isis_available', 'resilent_status', 'created_date'], 'required'],
             [['ios_compliance_status', 'bgp_available', 'isis_available', 'resilent_status'], 'integer'],
@@ -47,8 +45,7 @@ class PenaltyPoints extends \yii\db\ActiveRecord
     /**
      * @inheritdoc
      */
-    public function attributeLabels()
-    {
+    public function attributeLabels() {
         return [
             'id' => 'ID',
             'hostname' => 'Hostname',
@@ -63,4 +60,5 @@ class PenaltyPoints extends \yii\db\ActiveRecord
             'created_date' => 'Created Date',
         ];
     }
+
 }
