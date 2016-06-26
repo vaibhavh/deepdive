@@ -11,6 +11,12 @@ return [
     'bootstrap' => ['log'],
     'modules' => [],
     'components' => [
+        'urlManager' => [
+            'scriptUrl' => '/backend/index.php',
+            'class' => 'yii\web\UrlManager',
+            'showScriptName' => false,
+            'enablePrettyUrl' => true,
+        ],
         'user' => [
             'identityClass' => 'common\models\User',
             'enableAutoLogin' => true,
