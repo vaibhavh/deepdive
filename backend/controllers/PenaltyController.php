@@ -96,12 +96,11 @@ class PenaltyController extends Controller {
         $ipslaRecords = $this->getIpslaRecords();
         $packetDrop = $this->getPacketDrop();
         $latency = $this->geLatency();
-
         $day = date('D');
-
         $db = Yii::$app->db_rjil;
         $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
         $command = $db->createCommand($sql);
+
         $penelty_points = $command->queryAll();
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
@@ -198,36 +197,95 @@ class PenaltyController extends Controller {
         foreach ($tables as $table) {
             $table_name = $table['table_name'];
         }
-
         $collection = $database->$table_name;
         $details = array();
-        $pipeline = [
-            ['$limit' => 40000],
-            [
-                '$group' => [
-                    '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
-                    'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
-                    'bgp_available' => ['$sum' => '$bgp_available'],
-                    'isis_available' => ['$sum' => '$isis_available'],
-                    'resilent_status' => ['$sum' => '$resilent_status'],
-                    'device_type' => ['$first' => '$device_type'],
-                    'crc' => ['$sum' => '$crc'],
-                    'input_errors' => ['$sum' => '$input_errors'],
-                    'output_errors' => ['$sum' => '$output_errors'],
-                    'interface_resets' => ['$sum' => '$interface_resets'],
-                    'power' => ['$sum' => '$power'],
-                    'optical_power' => ['$sum' => '$optical_power'],
-                    'packetloss' => ['$sum' => '$packetloss'],
-                    'audit_penalty' => ['$sum' => '$audit_penalty'],
-                    'latency' => ['$sum' => '$latency'],
-                    'module_temperature' => ['$sum' => '$module_temperature'],
+        $limitValue = 30000;
+        $offsetValue = 0;
+        for ($i = 0; $i < 10; $i++) {
+            $pipeline = array();
+            $data = array();
+            $collection = $database->$table_name;
+            $pipeline = [
+                [
+                    '$group' => [
+                        '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
+                        'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
+                        'bgp_available' => ['$sum' => '$bgp_available'],
+                        'isis_available' => ['$sum' => '$isis_available'],
+                        'resilent_status' => ['$sum' => '$resilent_status'],
+                        'device_type' => ['$first' => '$device_type'],
+                        'crc' => ['$sum' => '$crc'],
+                        'input_errors' => ['$sum' => '$input_errors'],
+                        'output_errors' => ['$sum' => '$output_errors'],
+                        'interface_resets' => ['$sum' => '$interface_resets'],
+                        'power' => ['$sum' => '$power'],
+                        'optical_power' => ['$sum' => '$optical_power'],
+                        'packetloss' => ['$sum' => '$packetloss'],
+                        'audit_penalty' => ['$sum' => '$audit_penalty'],
+                        'latency' => ['$sum' => '$latency'],
+                        'module_temperature' => ['$sum' => '$module_temperature'],
+                    ],
                 ],
-            ],
-        ];
-        $options = ['allowDiskUse' => true];
-        $data = $collection->aggregate($pipeline, $options);
-//        echo "<pre/>", print_r($data);
-//        die;
+                ['$limit' => $limitValue],
+                ['$skip' => $offsetValue],
+            ];
+            $options = ['allowDiskUse' => true];
+            $data = $collection->aggregate($pipeline);
+            if (isset($data['result']) && !empty($data['result'])) {
+                $details = array();
+                $collection = $database->week_penalty_master;
+                foreach ($data['result'] as $value) {
+                    if (!empty($value)) {
+                        $is_exist = $collection->find(['hostname' => $value['_id']['hostname'], 'created_at' => date('Y:m:d')], ['hostname']);
+                        $hostname = '';
+                        foreach ($is_exist as $exist) {
+                            $hostname = $exist['hostname'];
+                        }
+                        if (empty($hostname)) {
+                            //echo $value['_id']['hostname']."\n";
+                            $device_type = "CSS";
+                            if ($value['device_type'] == 'PAR')
+                                $device_type = "AG1";
+                            if (in_array($value['device_type'], ['CSS', 'AG1']))
+                                $device_type = $value['device_type'];
+                            $data = [
+                                'hostname' => $value['_id']['hostname'],
+                                'loopback0' => $value['_id']['loopback0'],
+                                'device_type' => $device_type,
+                                'ios_compliance_status' => (int) $value['ios_compliance_status'],
+                                'bgp_available' => (int) $value['bgp_available'],
+                                'isis_available' => (int) $value['isis_available'],
+                                'resilent_status' => (int) $value['resilent_status'],
+                                'crc' => (int) $value['crc'],
+                                'input_errors' => (int) $value['input_errors'],
+                                'output_errors' => (int) $value['output_errors'],
+                                'interface_resets' => (int) $value['interface_resets'],
+                                'power' => (int) $value['power'],
+                                'optical_power' => (int) $value['optical_power'],
+                                'module_temperature' => (int) $value['module_temperature'],
+                                'packetloss' => (int) $value['packetloss'],
+                                'audit_penalty' => (int) $value['audit_penalty'],
+                                'latency' => (int) $value['latency'],
+                                'table_name' => $table_name,
+                                'created_at' => date('Y:m:d'),
+                            ];
+
+                            $collection->insert($data);
+                        } else {
+                            echo $value['_id']['hostname'] . " is already exist<br>";
+                        }
+                    }
+                }
+            } else {
+                echo "Data Not found";
+                break;
+            }
+
+            $offsetValue = $limitValue;
+            $limitValue = $limitValue + 30000;
+        }
+
+
 //        $data = $collection->group(
 //                ['hostname' => true, 'loopback0' => true], ["ios_compliance_status" => 0, 'bgp_available' => 0, 'isis_available' => 0, 'resilent_status' => 0,
 //            'device_type' => 0, 'crc' => 0, 'input_errors' => 0, 'output_errors' => 0, 'interface_resets' => 0, 'power' => 0, 'optical_power' => 0, 'module_temperature' => 0, 'packetloss' => 0, 'latency' => 0, 'audit_penalty' => 0], //
@@ -250,52 +308,7 @@ class PenaltyController extends Controller {
 //        }')
 //        );
 
-        $details = array();
-        $collection = $database->week_penalty_master;
-        if (!empty($data)) {
-            foreach ($data['result'] as $value) {
 
-                if (!empty($value)) {
-                    $is_exist = $collection->find(['hostname' => $value['_id']['hostname'], 'created_at' => date('Y:m:d')], ['hostname']);
-                    $hostname = '';
-                    foreach ($is_exist as $exist) {
-                        $hostname = $exist['hostname'];
-                    }
-                    if (empty($hostname)) {
-                        $device_type = "CSS";
-                        if ($value['device_type'] == 'PAR')
-                            $device_type = "AG1";
-                        if (in_array($value['device_type'], ['CSS', 'AG1']))
-                            $device_type = $value['device_type'];
-                        $data = [
-                            'hostname' => $value['_id']['hostname'],
-                            'loopback0' => $value['_id']['loopback0'],
-                            'device_type' => $device_type,
-                            'ios_compliance_status' => (int) $value['ios_compliance_status'],
-                            'bgp_available' => (int) $value['bgp_available'],
-                            'isis_available' => (int) $value['isis_available'],
-                            'resilent_status' => (int) $value['resilent_status'],
-                            'crc' => (int) $value['crc'],
-                            'input_errors' => (int) $value['input_errors'],
-                            'output_errors' => (int) $value['output_errors'],
-                            'interface_resets' => (int) $value['interface_resets'],
-                            'power' => (int) $value['power'],
-                            'optical_power' => (int) $value['optical_power'],
-                            'module_temperature' => (int) $value['module_temperature'],
-                            'packetloss' => (int) $value['packetloss'],
-                            'audit_penalty' => (int) $value['audit_penalty'],
-                            'latency' => (int) $value['latency'],
-                            'table_name' => $table_name,
-                            'created_at' => date('Y:m:d'),
-                        ];
-
-                        $collection->insert($data);
-                    } else {
-                        echo $value['_id']['hostname'] . " is already exist<br>";
-                    }
-                }
-            }
-        }
         die("done");
     }
 
