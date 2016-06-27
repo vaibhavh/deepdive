@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
@@ -96,17 +95,17 @@ use Yii;
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
  */
-class Component extends Object {
-
+class Component extends Object
+{
     /**
      * @var array the attached event handlers (event name => handlers)
      */
     private $_events = [];
-
     /**
      * @var Behavior[]|null the attached behaviors (behavior name => behavior). This is `null` when not initialized.
      */
     private $_behaviors;
+
 
     /**
      * Returns the value of a component property.
@@ -123,7 +122,8 @@ class Component extends Object {
      * @throws InvalidCallException if the property is write-only.
      * @see __set()
      */
-    public function __get($name) {
+    public function __get($name)
+    {
         $getter = 'get' . $name;
         if (method_exists($this, $getter)) {
             // read property, e.g. getName()
@@ -161,7 +161,8 @@ class Component extends Object {
      * @throws InvalidCallException if the property is read-only.
      * @see __get()
      */
-    public function __set($name, $value) {
+    public function __set($name, $value)
+    {
         $setter = 'set' . $name;
         if (method_exists($this, $setter)) {
             // set property
@@ -211,7 +212,8 @@ class Component extends Object {
      * @return boolean whether the named property is set
      * @see http://php.net/manual/en/function.isset.php
      */
-    public function __isset($name) {
+    public function __isset($name)
+    {
         $getter = 'get' . $name;
         if (method_exists($this, $getter)) {
             return $this->$getter() !== null;
@@ -240,7 +242,8 @@ class Component extends Object {
      * @throws InvalidCallException if the property is read only.
      * @see http://php.net/manual/en/function.unset.php
      */
-    public function __unset($name) {
+    public function __unset($name)
+    {
         $setter = 'set' . $name;
         if (method_exists($this, $setter)) {
             $this->$setter(null);
@@ -271,7 +274,8 @@ class Component extends Object {
      * @return mixed the method return value
      * @throws UnknownMethodException when calling unknown method
      */
-    public function __call($name, $params) {
+    public function __call($name, $params)
+    {
         $this->ensureBehaviors();
         foreach ($this->_behaviors as $object) {
             if ($object->hasMethod($name)) {
@@ -285,7 +289,8 @@ class Component extends Object {
      * This method is called after the object is created by cloning an existing one.
      * It removes all behaviors because they are attached to the old object.
      */
-    public function __clone() {
+    public function __clone()
+    {
         $this->_events = [];
         $this->_behaviors = null;
     }
@@ -306,7 +311,8 @@ class Component extends Object {
      * @see canGetProperty()
      * @see canSetProperty()
      */
-    public function hasProperty($name, $checkVars = true, $checkBehaviors = true) {
+    public function hasProperty($name, $checkVars = true, $checkBehaviors = true)
+    {
         return $this->canGetProperty($name, $checkVars, $checkBehaviors) || $this->canSetProperty($name, false, $checkBehaviors);
     }
 
@@ -325,7 +331,8 @@ class Component extends Object {
      * @return boolean whether the property can be read
      * @see canSetProperty()
      */
-    public function canGetProperty($name, $checkVars = true, $checkBehaviors = true) {
+    public function canGetProperty($name, $checkVars = true, $checkBehaviors = true)
+    {
         if (method_exists($this, 'get' . $name) || $checkVars && property_exists($this, $name)) {
             return true;
         } elseif ($checkBehaviors) {
@@ -354,7 +361,8 @@ class Component extends Object {
      * @return boolean whether the property can be written
      * @see canGetProperty()
      */
-    public function canSetProperty($name, $checkVars = true, $checkBehaviors = true) {
+    public function canSetProperty($name, $checkVars = true, $checkBehaviors = true)
+    {
         if (method_exists($this, 'set' . $name) || $checkVars && property_exists($this, $name)) {
             return true;
         } elseif ($checkBehaviors) {
@@ -379,7 +387,8 @@ class Component extends Object {
      * @param boolean $checkBehaviors whether to treat behaviors' methods as methods of this component
      * @return boolean whether the property is defined
      */
-    public function hasMethod($name, $checkBehaviors = true) {
+    public function hasMethod($name, $checkBehaviors = true)
+    {
         if (method_exists($this, $name)) {
             return true;
         } elseif ($checkBehaviors) {
@@ -419,7 +428,8 @@ class Component extends Object {
      *
      * @return array the behavior configurations.
      */
-    public function behaviors() {
+    public function behaviors()
+    {
         return [];
     }
 
@@ -428,7 +438,8 @@ class Component extends Object {
      * @param string $name the event name
      * @return boolean whether there is any handler attached to the event.
      */
-    public function hasEventHandlers($name) {
+    public function hasEventHandlers($name)
+    {
         $this->ensureBehaviors();
         return !empty($this->_events[$name]) || Event::hasHandlers($this, $name);
     }
@@ -463,7 +474,8 @@ class Component extends Object {
      * handler list.
      * @see off()
      */
-    public function on($name, $handler, $data = null, $append = true) {
+    public function on($name, $handler, $data = null, $append = true)
+    {
         $this->ensureBehaviors();
         if ($append || empty($this->_events[$name])) {
             $this->_events[$name][] = [$handler, $data];
@@ -481,7 +493,8 @@ class Component extends Object {
      * @return boolean if a handler is found and detached
      * @see on()
      */
-    public function off($name, $handler = null) {
+    public function off($name, $handler = null)
+    {
         $this->ensureBehaviors();
         if (empty($this->_events[$name])) {
             return false;
@@ -511,7 +524,8 @@ class Component extends Object {
      * @param string $name the event name
      * @param Event $event the event parameter. If not set, a default [[Event]] object will be created.
      */
-    public function trigger($name, Event $event = null) {
+    public function trigger($name, Event $event = null)
+    {
         $this->ensureBehaviors();
         if (!empty($this->_events[$name])) {
             if ($event === null) {
@@ -540,7 +554,8 @@ class Component extends Object {
      * @param string $name the behavior name
      * @return null|Behavior the behavior object, or null if the behavior does not exist
      */
-    public function getBehavior($name) {
+    public function getBehavior($name)
+    {
         $this->ensureBehaviors();
         return isset($this->_behaviors[$name]) ? $this->_behaviors[$name] : null;
     }
@@ -549,7 +564,8 @@ class Component extends Object {
      * Returns all behaviors attached to this component.
      * @return Behavior[] list of behaviors attached to this component
      */
-    public function getBehaviors() {
+    public function getBehaviors()
+    {
         $this->ensureBehaviors();
         return $this->_behaviors;
     }
@@ -569,7 +585,8 @@ class Component extends Object {
      * @return Behavior the behavior object
      * @see detachBehavior()
      */
-    public function attachBehavior($name, $behavior) {
+    public function attachBehavior($name, $behavior)
+    {
         $this->ensureBehaviors();
         return $this->attachBehaviorInternal($name, $behavior);
     }
@@ -581,7 +598,8 @@ class Component extends Object {
      * @param array $behaviors list of behaviors to be attached to the component
      * @see attachBehavior()
      */
-    public function attachBehaviors($behaviors) {
+    public function attachBehaviors($behaviors)
+    {
         $this->ensureBehaviors();
         foreach ($behaviors as $name => $behavior) {
             $this->attachBehaviorInternal($name, $behavior);
@@ -594,7 +612,8 @@ class Component extends Object {
      * @param string $name the behavior's name.
      * @return null|Behavior the detached behavior. Null if the behavior does not exist.
      */
-    public function detachBehavior($name) {
+    public function detachBehavior($name)
+    {
         $this->ensureBehaviors();
         if (isset($this->_behaviors[$name])) {
             $behavior = $this->_behaviors[$name];
@@ -609,7 +628,8 @@ class Component extends Object {
     /**
      * Detaches all behaviors from the component.
      */
-    public function detachBehaviors() {
+    public function detachBehaviors()
+    {
         $this->ensureBehaviors();
         foreach ($this->_behaviors as $name => $behavior) {
             $this->detachBehavior($name);
@@ -619,7 +639,8 @@ class Component extends Object {
     /**
      * Makes sure that the behaviors declared in [[behaviors()]] are attached to this component.
      */
-    public function ensureBehaviors() {
+    public function ensureBehaviors()
+    {
         if ($this->_behaviors === null) {
             $this->_behaviors = [];
             foreach ($this->behaviors() as $name => $behavior) {
@@ -636,7 +657,8 @@ class Component extends Object {
      * @param string|array|Behavior $behavior the behavior to be attached
      * @return Behavior the attached behavior.
      */
-    private function attachBehaviorInternal($name, $behavior) {
+    private function attachBehaviorInternal($name, $behavior)
+    {
         if (!($behavior instanceof Behavior)) {
             $behavior = Yii::createObject($behavior);
         }
@@ -652,5 +674,4 @@ class Component extends Object {
         }
         return $behavior;
     }
-
 }

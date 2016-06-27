@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
@@ -47,8 +46,8 @@ namespace yii\web;
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
  */
-interface IdentityInterface {
-
+interface IdentityInterface
+{
     /**
      * Finds an identity by the given ID.
      * @param string|integer $id the ID to be looked for
