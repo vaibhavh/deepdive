@@ -98,7 +98,8 @@ class PenaltyController extends Controller {
         $latency = $this->geLatency();
         $day = date('D');
         $db = Yii::$app->db_rjil;
-        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
+//        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
+        $sql = "SELECT * FROM tbl_built_penalty_points limit 2000";
         $command = $db->createCommand($sql);
 
         $penelty_points = $command->queryAll();

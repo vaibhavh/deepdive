@@ -48,8 +48,8 @@ $this->params['breadcrumbs'][] = $this->title;
             'latency',
             'total',
             'created_at',
-        //['class' => 'yii\grid\ActionColumn'],
-        ],
-    ]);
-    ?>
-    <?php Pjax::end(); ?></div>
+                //['class' => 'yii\grid\ActionColumn'],
+                ],
+            ]);
+            ?>
+            <?php Pjax::end(); ?></div>
