@@ -98,8 +98,8 @@ class PenaltyController extends Controller {
         $latency = $this->geLatency();
         $day = date('D');
         $db = Yii::$app->db_rjil;
-//        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
-        $sql = "SELECT * FROM tbl_built_penalty_points limit 2000";
+        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
+//        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)='2016-06-27' limit 5000";
         $command = $db->createCommand($sql);
 
         $penelty_points = $command->queryAll();
@@ -112,7 +112,7 @@ class PenaltyController extends Controller {
         if ($day == 'Mon') {
             $collection->update([], ['$set' => ['status' => 1]]);
             $table_name = "weekday_penalty_" . $date;
-            $collection->insert(['table_name' => "weekday_penalty_" . $date, 'status' => 0, 'date' => date('Y:m:d')]);
+            $collection->insert(['table_name' => "weekday_penalty_" . $date, 'status' => 0, 'date' => date('Y-m-d')]);
         } else {
             $tables = $collection->find(['status' => 0], ['table_name']);
             foreach ($tables as $table) {
@@ -125,12 +125,11 @@ class PenaltyController extends Controller {
             $data = array();
             if (!empty($penelty_points)) {
                 foreach ($penelty_points as $penelty_point) {
-                    $is_exist = $collection->find(['hostname' => $penelty_point['hostname'], 'created_date' => date("Y:m:d")], ['hostname']);
+                    $is_exist = $collection->find(['hostname' => $penelty_point['hostname'], 'created_date' => date('Y-m-d')], ['hostname']);
                     $hostname = '';
                     foreach ($is_exist as $exist) {
                         $hostname = $exist['hostname'];
                     }
-
                     if (empty($hostname)) {
                         $packet_drop = 0;
                         $latency_point = 0;
@@ -147,8 +146,8 @@ class PenaltyController extends Controller {
                             'resilent_status' => (int) $penelty_point['resilent_status'],
                         ];
                         $data['crc'] = 0;
+                        $data['input_errors'] = 0;
                         $data['output_errors'] = 0;
-                        $data['interface_resets'] = 0;
                         $data['interface_resets'] = 0;
                         $data['power'] = 0;
                         $data['optical_power'] = 0;
@@ -174,7 +173,8 @@ class PenaltyController extends Controller {
                         if (isset($auditPoints[$penelty_point['loopback0']]))
                             $data['audit_penalty'] = (int) $auditPoints[$penelty_point['loopback0']];
                         $data['table_name'] = $table_name;
-                        $data['created_date'] = date("Y:m:d");
+                        $data['created_date'] = date("Y-m-d");
+//                        $data['created_date'] = date('Y-m-d', strtotime("-1 days"));
                         $collection->insert($data);
                         $data = array();
                     } else {
@@ -316,6 +316,7 @@ class PenaltyController extends Controller {
     public function getIpslaRecords() {
         $db = Yii::$app->db_rjil;
         $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
+//        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)='2016-06-27'";
         $command = $db->createCommand($sql);
         $ipsla_points = $command->queryAll();
 
@@ -352,6 +353,7 @@ class PenaltyController extends Controller {
     public function getPacketDrop() {
         $db = Yii::$app->db_rjil;
         $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
+//        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)='2016-06-27' group by host_name";
         $command = $db->createCommand($sql);
         $ipsla_points = $command->queryAll();
 
@@ -367,6 +369,7 @@ class PenaltyController extends Controller {
     public function geLatency() {
         $db = Yii::$app->db_rjil;
         $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
+//        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)='2016-06-27' group by host_name";
         $command = $db->createCommand($sql);
         $ipsla_latency_points = $command->queryAll();
         $data = array();

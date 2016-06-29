@@ -32,6 +32,25 @@ class PenaltyPointsSearch extends PenaltyPoints {
     }
 
     /**
+     * @inheritdoc
+     */
+    public function attributeLabels() {
+        return [
+            'id' => 'ID',
+            'hostname' => 'Hostname',
+            'loopback0' => 'Loopback0',
+            'device_type' => 'Device Type',
+            'ios_compliance_status' => 'Ios Compliance Status',
+            'ios_current_version' => 'Ios Current Version',
+            'ios_built_version' => 'Ios Built Version',
+            'bgp_available' => '1 Bgp Available',
+            'isis_available' => '1 Isis Available',
+            'resilent_status' => 'Repair Path Status',
+            'created_date' => 'Created Date',
+        ];
+    }
+
+    /**
      * Creates data provider instance with search query applied
      *
      * @param array $params
@@ -91,7 +110,12 @@ class PenaltyPointsSearch extends PenaltyPoints {
 
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
-        $collection = $database->week_penalty_master;
+        $collection = $database->week_master;
+        $tables = $collection->find(['status' => 0], ['table_name']);
+        foreach ($tables as $table) {
+            $table_name = $table['table_name'];
+        }
+        $collection = $database->$table_name;
         $cursors = $collection->find($mySearchParams);
         $penaltyPoints = array();
         foreach ($cursors as $cursor) {
@@ -169,6 +193,91 @@ class PenaltyPointsSearch extends PenaltyPoints {
             $penaltyResultArr[$key] = $record;
         }
         return $penaltyResultArr;
+    }
+
+    public function getData($params) {
+        $connection = new \MongoClient(Yii::$app->mongodb->dsn);
+        $database = $connection->deepdive;
+        $collection = $database->week_master;
+        $tables = $collection->find(['status' => 0], ['table_name', 'date']);
+        $date = $table_name = '';
+        foreach ($tables as $table) {
+            $table_name = $table['table_name'];
+            $date = $table['date'];
+        }
+        $match = array();
+        if (!empty($_POST['PenaltyPointsSearch'])) {
+            $modelData = $_POST['PenaltyPointsSearch'];
+            if (!empty($modelData['hostname'])) {
+                $match['hostname'] = $modelData['hostname'];
+            }
+            if (!empty($modelData['loopback0'])) {
+                $match['loopback0'] = $modelData['loopback0'];
+            }
+        }
+        $limitValue = 30000;
+        $offsetValue = 0;
+        $details = array();
+        for ($i = 0; $i < 10; $i++) {
+            $pipeline = array();
+            $data = array();
+            $collection = $database->$table_name;
+            $pipeline = array();
+            if (!empty($match)) {
+                $pipeline[]['$match'] = $match;
+            }
+            $pipeline[]['$group'] = [
+                '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
+                'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
+                'bgp_available' => ['$sum' => '$bgp_available'],
+                'isis_available' => ['$sum' => '$isis_available'],
+                'resilent_status' => ['$sum' => '$resilent_status'],
+                'device_type' => ['$first' => '$device_type'],
+                'crc' => ['$sum' => '$crc'],
+                'input_errors' => ['$sum' => '$input_errors'],
+                'output_errors' => ['$sum' => '$output_errors'],
+                'interface_resets' => ['$sum' => '$interface_resets'],
+                'power' => ['$sum' => '$power'],
+                'optical_power' => ['$sum' => '$optical_power'],
+                'packetloss' => ['$sum' => '$packetloss'],
+                'audit_penalty' => ['$sum' => '$audit_penalty'],
+                'latency' => ['$sum' => '$latency'],
+                'module_temperature' => ['$sum' => '$module_temperature'],
+            ];
+
+            $pipeline[]['$limit'] = $limitValue;
+            $pipeline[]['$skip'] = $offsetValue;
+
+            $options = ['allowDiskUse' => true];
+            $data = $collection->aggregate($pipeline);
+
+            if (isset($data['result']) && !empty($data['result'])) {
+                foreach ($data['result'] as $dataDtl) {
+                    $host_name = $dataDtl['_id']['hostname'];
+                    $loopback0 = $dataDtl['_id']['loopback0'];
+                    unset($dataDtl['_id']);
+                    $dataDtl['hostname'] = $host_name;
+                    $dataDtl['loopback0'] = $loopback0;
+                    $details[] = $dataDtl;
+                }
+            }
+            if (!empty($match)) {
+                break;
+            }
+
+            $offsetValue = $limitValue;
+            $limitValue = $limitValue + 30000;
+        }
+        $recordWithSetPoints = self::setPoints($details);
+        $penaltyPointsProvider = new ArrayDataProvider([
+            'allModels' => $recordWithSetPoints,
+            'pagination' => ['pageSize' => 20],
+            'sort' => ['attributes' => ['hostname', 'loopback0', 'ios_compliance_status', 'bgp_available', 'isis_available', 'isis_available', 'device_type', 'crc', 'input_errors', 'output_errors', 'interface_resets'
+                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status']]
+        ]);
+
+        $this->load($params);
+        return array('data' => $penaltyPointsProvider, 'date' => $date);
     }
 
 }

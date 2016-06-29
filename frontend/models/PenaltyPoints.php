@@ -54,9 +54,9 @@ class PenaltyPoints extends \yii\db\ActiveRecord {
             'ios_compliance_status' => 'Ios Compliance Status',
             'ios_current_version' => 'Ios Current Version',
             'ios_built_version' => 'Ios Built Version',
-            'bgp_available' => 'Bgp Available',
-            'isis_available' => 'Isis Available',
-            'resilent_status' => 'Resilent Status',
+            'bgp_available' => '1 Bgp Available',
+            'isis_available' => '1 Isis Available',
+            'resilent_status' => 'Repair Path Status',
             'created_date' => 'Created Date',
         ];
     }
