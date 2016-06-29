@@ -4,6 +4,8 @@ use yii\helpers\Html;
 use yii\widgets\Pjax;
 use app\controllers\SiteController;
 use kartik\grid\GridView;
+use yii\bootstrap\Modal;
+use frontend\models\CustomActionColumn;
 
 //use yii\grid\GridView;
 
@@ -13,6 +15,32 @@ use kartik\grid\GridView;
 
 $this->title = 'Penalty Points';
 $this->params['breadcrumbs'][] = $this->title;
+?>
+<style type="text/css">
+    @media screen and (min-width: 768px) {
+        .modal-dialog {
+          width: 800px; /* New width for default modal */
+        }
+        .modal-sm {
+          width: 350px; /* New width for small modal */
+        }
+    }
+
+    @media screen and (min-width: 992px) {
+        .modal-lg {
+          width: 950px; /* New width for large modal */
+        }
+    }
+
+</style>
+<?php
+    Modal::begin([
+        'header' => '<h2>Penalty Points</h2>',
+            'id' => 'model',
+            'size' => 'model-lg',
+    ]);
+    echo '<div id="modelContent" align="center"></div>';
+    Modal::end();
 ?>
 <p>
     <?php
@@ -96,7 +124,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'latency',
             'audit_penalty',
             'total',
-        //['class' => 'yii\grid\ActionColumn'],
+        ['class' => 'frontend\models\CustomActionColumn'],
         ],
     ]);
     ?>

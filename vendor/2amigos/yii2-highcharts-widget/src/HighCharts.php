@@ -56,6 +56,9 @@ class HighCharts extends Widget
             [
                 'exporting' => [
                     'enabled' => true
+                ],
+                'drilldown' => [
+                    'enabled' => true
                 ]
             ],
             $this->clientOptions
@@ -63,6 +66,10 @@ class HighCharts extends Widget
 
         if (ArrayHelper::getValue($this->clientOptions, 'exporting.enabled')) {
             $this->modules[] = 'exporting.js';
+        }
+
+        if (ArrayHelper::getValue($this->clientOptions, 'drilldown.enabled')) {
+            $this->modules[] = 'drilldown.js';
         }
 
         $this->_renderTo = ArrayHelper::getValue($this->clientOptions, 'chart.renderTo');

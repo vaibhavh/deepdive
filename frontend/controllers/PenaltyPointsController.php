@@ -58,6 +58,27 @@ class PenaltyPointsController extends Controller {
                     'searchModel' => $pointsModel,
         ]);
     }
+    
+    /**
+     * Lists all PenaltyPoints models.
+     * @return mixed
+     */
+    public function actionGraph()
+    {
+        $sectionPoints = array('IPSLA' => 5000, 'Interface Errors' => 1000, 'Resiliency' => 2000);
+        $subSectionPoints = array('IPSLA' => array('Packet Loss' => 3000, 'Jitter' => 500, 'Latency' => 1500), 
+                                  'Interface Errors' => array('Crc' => 100, 'Input Errors' => 100, 'Output Errors' => 200,
+                                                              'Interface Reset' => 100, 'SFP Module Temperature' => 200,
+                                                              'Optical Power' => 100, 'Buffer Consumption' => 100,'Power Error' => 100), 
+                                  'Resiliency' => array('1 bgp available' => 1000, '1 isis available' => 500, 'Repair path not available' => 500));
+        $sectionPointsData = PenaltyPoints::getSectionData($sectionPoints);
+        $subSectionPointsData = PenaltyPoints::getSubSectionDrilldownData($subSectionPoints);
+
+        return $this->renderAjax('graph', [
+            'sectionData' => $sectionPointsData,
+            'subSectionData' => $subSectionPointsData,
+        ]);
+    }
 
     /**
      * Displays a single PenaltyPoints model.
