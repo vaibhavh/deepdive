@@ -47,11 +47,14 @@ class PenaltyPointsController extends Controller {
      * @return mixed
      */
     public function actionPoints() {
+        error_reporting(E_ALL);
+        ini_set("display_errors", 1);
         $pointsModel = new PenaltyPointsSearch();
-        $dataProvider = $pointsModel->points(Yii::$app->request->queryParams);
 
+        $dataProvider = $pointsModel->getData(Yii::$app->request->queryParams);
         return $this->render('index', [
-                    'dataProvider' => $dataProvider,
+                    'dataProvider' => $dataProvider['data'],
+                    'date' => $dataProvider['date'],
                     'searchModel' => $pointsModel,
         ]);
     }
