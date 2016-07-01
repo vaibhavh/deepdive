@@ -195,7 +195,8 @@ class PenaltyPointsSearch extends PenaltyPoints {
         return $penaltyResultArr;
     }
 
-    public function getData($params) {
+    public function getData($params, $host_name = '') {
+
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
         $collection = $database->week_master;
@@ -215,10 +216,15 @@ class PenaltyPointsSearch extends PenaltyPoints {
                 $match['loopback0'] = $modelData['loopback0'];
             }
         }
-        $limitValue = 30000;
+
+        if (!empty($host_name)) {
+            $match['hostname'] = $host_name;
+        }
+
+        $limitValue = 10;
         $offsetValue = 0;
         $details = array();
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 1; $i++) {
             $pipeline = array();
             $data = array();
             $collection = $database->$table_name;
@@ -250,7 +256,6 @@ class PenaltyPointsSearch extends PenaltyPoints {
 
             $options = ['allowDiskUse' => true];
             $data = $collection->aggregate($pipeline);
-
             if (isset($data['result']) && !empty($data['result'])) {
                 foreach ($data['result'] as $dataDtl) {
                     $host_name = $dataDtl['_id']['hostname'];
@@ -258,7 +263,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
                     unset($dataDtl['_id']);
                     $dataDtl['hostname'] = $host_name;
                     $dataDtl['loopback0'] = $loopback0;
-                    $details[] = $dataDtl;
+                    $details[$host_name] = $dataDtl;
                 }
             }
             if (!empty($match)) {
@@ -266,8 +271,9 @@ class PenaltyPointsSearch extends PenaltyPoints {
             }
 
             $offsetValue = $limitValue;
-            $limitValue = $limitValue + 30000;
+            $limitValue = $limitValue + 10;
         }
+
         $recordWithSetPoints = self::setPoints($details);
         $penaltyPointsProvider = new ArrayDataProvider([
             'allModels' => $recordWithSetPoints,
@@ -277,7 +283,8 @@ class PenaltyPointsSearch extends PenaltyPoints {
         ]);
 
         $this->load($params);
-        return array('data' => $penaltyPointsProvider, 'date' => $date);
+
+        return array('data' => $penaltyPointsProvider, 'date' => $date, 'details' => $recordWithSetPoints);
     }
 
 }

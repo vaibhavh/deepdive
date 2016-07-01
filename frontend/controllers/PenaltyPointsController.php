@@ -58,30 +58,59 @@ class PenaltyPointsController extends Controller {
                     'searchModel' => $pointsModel,
         ]);
     }
-    
+
     /**
      * Lists all PenaltyPoints models.
      * @return mixed
      */
-    public function actionGraph($id)
-    {   
-        /*$db = Yii::$app->db_rjil;
-        $sql = "SELECT `modified_sapid` FROM `ndd_host_name` WHERE is_deleted = 0 AND host_name = '".$id."'";
-        $command = $db->createCommand($sql);
-        $deviceSapid = $command->queryRow();*/
-        
-        $sectionPoints = array('IPSLA' => 5000, 'Interface Errors' => 1000, 'Resiliency' => 2000);
-        $subSectionPoints = array('IPSLA' => array('Packet Loss' => 3000, 'Jitter' => 500, 'Latency' => 1500), 
-                                  'Interface Errors' => array('Crc' => 100, 'Input Errors' => 100, 'Output Errors' => 200,
-                                                              'Interface Reset' => 100, 'SFP Module Temperature' => 200,
-                                                              'Optical Power' => 100, 'Buffer Consumption' => 100,'Power Error' => 100), 
-                                  'Resiliency' => array('1 bgp available' => 1000, '1 isis available' => 500, 'Repair path not available' => 500));
+    public function actionGraph($id) {
+//        if (!empty($id)) {
+//
+//            echo "<pre/>", print_r($id);
+//            die;
+//        }
+
+        $pointsModel = new PenaltyPointsSearch();
+        $data = $pointsModel->getData(Yii::$app->request->queryParams, $id);
+        $ipsla = $interface_resets = $resiliency = 0;
+        if (!empty($data['details'])) {
+            $details = $data['details'][$id];
+            $ipsla = $details['packetloss'] + $details['latency'];
+            $interface_resets = $details['crc'] + $details['input_errors'] + $details['output_errors'] + $details['interface_resets'] + $details['module_temperature'] + $details['optical_power'] + $details['power'];
+            $resiliency = $details['bgp_available'] + $details['isis_available'] + $details['resilent_status'];
+            $subSectionPoints = array(
+                'IPSLA' => array(
+                    'Packet Loss' => (isset($details['packetloss']) ? $details['packetloss'] : 0),
+                    'Latency' => $details['latency']
+                ),
+                'Interface Errors' => array(
+                    'Crc' => $details['crc'],
+                    'Input Errors' => $details['input_errors'],
+                    'Output Errors' => $details['output_errors'],
+                    'Interface Reset' => $details['interface_resets'],
+                    'SFP Module Temperature' => $details['module_temperature'],
+                    'Optical Power' => $details['optical_power'],
+                    'Power Error' => $details['power']),
+                'Resiliency' => array(
+                    '1 bgp available' => $details['bgp_available'],
+                    '1 isis available' => $details['isis_available'],
+                    'Repair path not available' => $details['resilent_status']),
+                'Configuration Audit' => array(
+                    'Configuration Audit' => $details['audit_penalty']),
+                'IOS & SMU Compliance' => array(
+                    'IOS & SMU Compliance' => $details['ios_compliance_status'])
+            );
+            $deviceDetails = ['hostname' => $details['hostname'], 'loopback0' => $details['loopback0'], 'date' => $data['date']];
+        }
+
+        $sectionPoints = array('IPSLA' => $ipsla, 'Interface Errors' => $interface_resets, 'Resiliency' => $resiliency, 'Configuration Audit' => $details['audit_penalty'], 'IOS & SMU Compliance' => $details['ios_compliance_status']);
         $sectionPointsData = PenaltyPoints::getSectionData($sectionPoints);
         $subSectionPointsData = PenaltyPoints::getSubSectionDrilldownData($subSectionPoints);
 
         return $this->renderAjax('graph', [
-            'sectionData' => $sectionPointsData,
-            'subSectionData' => $subSectionPointsData,
+                    'sectionData' => $sectionPointsData,
+                    'subSectionData' => $subSectionPointsData,
+                    'deviceDetails' => $deviceDetails
         ]);
     }
 
