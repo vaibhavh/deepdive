@@ -63,8 +63,13 @@ class PenaltyPointsController extends Controller {
      * Lists all PenaltyPoints models.
      * @return mixed
      */
-    public function actionGraph()
-    {
+    public function actionGraph($id)
+    {   
+        /*$db = Yii::$app->db_rjil;
+        $sql = "SELECT `modified_sapid` FROM `ndd_host_name` WHERE is_deleted = 0 AND host_name = '".$id."'";
+        $command = $db->createCommand($sql);
+        $deviceSapid = $command->queryRow();*/
+        
         $sectionPoints = array('IPSLA' => 5000, 'Interface Errors' => 1000, 'Resiliency' => 2000);
         $subSectionPoints = array('IPSLA' => array('Packet Loss' => 3000, 'Jitter' => 500, 'Latency' => 1500), 
                                   'Interface Errors' => array('Crc' => 100, 'Input Errors' => 100, 'Output Errors' => 200,
