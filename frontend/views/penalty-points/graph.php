@@ -27,7 +27,7 @@ echo Highcharts::widget([
             'type' => 'pie'
         ],
         'title' => [
-            'text' => "Penalty Graph {$deviceDetails['hostname']} {$deviceDetails['loopback0']} {$fromDate} to {$curretntDate}"
+            'text' => "Penalty Graph <b>{$deviceDetails['hostname']} {$deviceDetails['loopback0']}<b><br> {$fromDate} to {$curretntDate}"
         ],
         'subtitle' => [
             'text' => 'Click the slices to view subsections.'
