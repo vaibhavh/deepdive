@@ -50,7 +50,7 @@ class PenaltyPointsController extends Controller {
         error_reporting(E_ALL);
         ini_set("display_errors", 1);
         $pointsModel = new PenaltyPointsSearch();
-
+//        echo "<pre/>",print_r(Yii::$app->request->post());die;
         $dataProvider = $pointsModel->getData(Yii::$app->request->queryParams);
         return $this->render('index', [
                     'dataProvider' => $dataProvider['data'],
@@ -64,12 +64,6 @@ class PenaltyPointsController extends Controller {
      * @return mixed
      */
     public function actionGraph($id) {
-//        if (!empty($id)) {
-//
-//            echo "<pre/>", print_r($id);
-//            die;
-//        }
-
         $pointsModel = new PenaltyPointsSearch();
         $data = $pointsModel->getData(Yii::$app->request->queryParams, $id);
         $ipsla = $interface_resets = $resiliency = 0;
@@ -185,6 +179,18 @@ class PenaltyPointsController extends Controller {
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
+    }
+
+    public function actionGetGraphDetails() {
+        $db = Yii::$app->db_rjil;
+//        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
+        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)='2016-06-28' limit 1";
+        $command = $db->createCommand($sql);
+        $ipsla_points = $command->queryAll();
+        echo "<pre/>", print_r($ipsla_points);
+        die;
+        $model = new PenaltyPointsSearch();
+        $model->getGraph();
     }
 
 }

@@ -98,8 +98,8 @@ class PenaltyController extends Controller {
         $latency = $this->geLatency();
         $day = date('D');
         $db = Yii::$app->db_rjil;
-        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
-//        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)='2016-06-27' limit 5000";
+//        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
+        $sql = "SELECT *,tu.modified_sapid FROM tbl_built_penalty_points as t INNER JOIN ndd_host_name as tu ON(t.hostname=tu.host_name AND tu.is_deleted=0) WHERE date(created_date)='2016-06-28' limit 5000";
         $command = $db->createCommand($sql);
 
         $penelty_points = $command->queryAll();
@@ -137,6 +137,7 @@ class PenaltyController extends Controller {
                         $data = [
                             'hostname' => $penelty_point['hostname'],
                             'loopback0' => $penelty_point['loopback0'],
+                            'sapid' => $penelty_point['modified_sapid'],
                             'device_type' => $penelty_point['device_type'],
                             'ios_compliance_status' => (int) $penelty_point['ios_compliance_status'],
                             'ios_current_version' => $penelty_point['ios_current_version'],
@@ -173,8 +174,9 @@ class PenaltyController extends Controller {
                         if (isset($auditPoints[$penelty_point['loopback0']]))
                             $data['audit_penalty'] = (int) $auditPoints[$penelty_point['loopback0']];
                         $data['table_name'] = $table_name;
-                        $data['created_date'] = date("Y-m-d");
-//                        $data['created_date'] = date('Y-m-d', strtotime("-1 days"));
+//                        $data['created_date'] = date("Y-m-d");
+                        $data['created_date'] = "2016-06-28";
+
                         $collection->insert($data);
                         $data = array();
                     } else {
@@ -315,8 +317,8 @@ class PenaltyController extends Controller {
 
     public function getIpslaRecords() {
         $db = Yii::$app->db_rjil;
-        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
-//        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)='2016-06-27'";
+//        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
+        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)='2016-06-28'";
         $command = $db->createCommand($sql);
         $ipsla_points = $command->queryAll();
 
@@ -352,8 +354,8 @@ class PenaltyController extends Controller {
 
     public function getPacketDrop() {
         $db = Yii::$app->db_rjil;
-        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
-//        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)='2016-06-27' group by host_name";
+//        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
+        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)='2016-06-28' group by host_name";
         $command = $db->createCommand($sql);
         $ipsla_points = $command->queryAll();
 
@@ -368,8 +370,8 @@ class PenaltyController extends Controller {
 
     public function geLatency() {
         $db = Yii::$app->db_rjil;
-        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
-//        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)='2016-06-27' group by host_name";
+//        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
+        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)='2016-06-28' group by host_name";
         $command = $db->createCommand($sql);
         $ipsla_latency_points = $command->queryAll();
         $data = array();

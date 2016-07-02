@@ -58,24 +58,41 @@ Modal::end();
         <?php // echo $this->render('_search', ['model' => $searchModel]);    ?>
 
 
-    <?php Pjax::begin(['id' => 'grid', 'timeout' => false, 'clientOptions' => ['method' => 'POST']]); ?>    <?=
+    <?php // Pjax::begin(['id' => 'grid', 'timeout' => false, 'clientOptions' => ['method' => 'POST']]); ?> 
+    <?php
+    \yii\widgets\Pjax::begin(['id' => 'penlaty',
+        'timeout' => false,
+        'enablePushState' => false,
+        'clientOptions' => ['method' => 'POST']]);
+    ?>
+
+    <?=
     GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'containerOptions' => ['style' => 'overflow: auto'],
         'headerRowOptions' => ['class' => 'kartik-sheet-style'],
         'filterRowOptions' => ['class' => 'kartik-sheet-style'],
-        'pjax' => true, // pjax is set to always true for this demo
+        'pjax' => true,
+        'bordered' => true,
+        'striped' => false,
+        'condensed' => false,
+        'responsive' => true,
+        'panel' => [
+            'type' => GridView::TYPE_PRIMARY
+        ],
         'beforeHeader' => [
             [
                 'columns' => [
                     ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
-                    ['content' => 'Device Details', 'options' => ['colspan' => 3, 'class' => 'text-center warning']],
+                    ['content' => 'Device Details', 'options' => ['colspan' => 4, 'class' => 'text-center warning']],
                     ['content' => 'IOS & SMU Compliance', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
                     ['content' => 'Resiliency', 'options' => ['colspan' => 3, 'class' => 'text-center warning']],
                     ['content' => 'Interface Errors', 'options' => ['colspan' => 7, 'class' => 'text-center warning']],
                     ['content' => 'IPSLA', 'options' => ['colspan' => 2, 'class' => 'text-center warning']],
                     ['content' => 'Configuration Audit', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
+                    ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
+                    ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
                 ],
 //                'options' => ['class' => 'skip-export'] // remove this row from export
             ]
@@ -84,6 +101,7 @@ Modal::end();
             ['class' => 'kartik\grid\SerialColumn'],
             'hostname',
             'loopback0',
+            'sapid',
             [
                 'filter' => false,
                 'value' => "device_type",
@@ -121,8 +139,8 @@ Modal::end();
             'optical_power',
             'module_temperature',
             'packetloss',
-            'latency',
             'audit_penalty',
+            'latency',
             'total',
             ['class' => 'frontend\models\CustomActionColumn'],
         ],
@@ -136,5 +154,8 @@ Modal::end();
     }
     tr th .text-center{
         background-color: #aabcfe;
+    }
+    tr td {
+        text-align: center;
     }
 </style>

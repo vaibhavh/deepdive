@@ -13,13 +13,15 @@ use yii\data\ArrayDataProvider;
  */
 class PenaltyPointsSearch extends PenaltyPoints {
 
+    public $sapid = '';
+
     /**
      * @inheritdoc
      */
     public function rules() {
         return [
             [['id', 'ios_compliance_status', 'bgp_available', 'isis_available', 'resilent_status'], 'integer'],
-            [['hostname', 'loopback0', 'device_type', 'ios_current_version', 'ios_built_version', 'created_date'], 'safe'],
+            [['hostname', 'loopback0', 'device_type', 'ios_current_version', 'ios_built_version', 'created_date', 'sapid'], 'safe'],
         ];
     }
 
@@ -207,21 +209,23 @@ class PenaltyPointsSearch extends PenaltyPoints {
             $date = $table['date'];
         }
         $match = array();
-        if (!empty($_POST['PenaltyPointsSearch'])) {
-            $modelData = $_POST['PenaltyPointsSearch'];
+        if (!empty($_REQUEST['PenaltyPointsSearch'])) {
+            $modelData = $_REQUEST['PenaltyPointsSearch'];
             if (!empty($modelData['hostname'])) {
                 $match['hostname'] = $modelData['hostname'];
             }
             if (!empty($modelData['loopback0'])) {
                 $match['loopback0'] = $modelData['loopback0'];
             }
+            if (!empty($modelData['sapid'])) {
+                $match['sapid'] = $modelData['sapid'];
+            }
         }
 
         if (!empty($host_name)) {
             $match['hostname'] = $host_name;
         }
-
-        $limitValue = 10;
+        $limitValue = 5000;
         $offsetValue = 0;
         $details = array();
         for ($i = 0; $i < 1; $i++) {
@@ -232,6 +236,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
             if (!empty($match)) {
                 $pipeline[]['$match'] = $match;
             }
+            $pipeline[]['$sort'] = ['hostname' => 1];
             $pipeline[]['$group'] = [
                 '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
                 'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
@@ -249,6 +254,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
                 'audit_penalty' => ['$sum' => '$audit_penalty'],
                 'latency' => ['$sum' => '$latency'],
                 'module_temperature' => ['$sum' => '$module_temperature'],
+                'sapid' => ['$first' => '$sapid'],
             ];
 
             $pipeline[]['$limit'] = $limitValue;
@@ -271,7 +277,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
             }
 
             $offsetValue = $limitValue;
-            $limitValue = $limitValue + 10;
+            $limitValue = $limitValue + 5000;
         }
 
         $recordWithSetPoints = self::setPoints($details);
@@ -279,12 +285,16 @@ class PenaltyPointsSearch extends PenaltyPoints {
             'allModels' => $recordWithSetPoints,
             'pagination' => ['pageSize' => 20],
             'sort' => ['attributes' => ['hostname', 'loopback0', 'ios_compliance_status', 'bgp_available', 'isis_available', 'isis_available', 'device_type', 'crc', 'input_errors', 'output_errors', 'interface_resets'
-                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status']]
+                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status', 'sapid']]
         ]);
 
         $this->load($params);
 
         return array('data' => $penaltyPointsProvider, 'date' => $date, 'details' => $recordWithSetPoints);
+    }
+
+    public function getGraph($circle = '') {
+        
     }
 
 }
