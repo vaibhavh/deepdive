@@ -20,6 +20,7 @@ return array(
     'kartik\\dialog\\' => array($vendorDir . '/kartik-v/yii2-dialog'),
     'kartik\\base\\' => array($vendorDir . '/kartik-v/yii2-krajee-base'),
     'dosamigos\\highcharts\\' => array($vendorDir . '/2amigos/yii2-highcharts-widget/src'),
+    'dosamigos\\datepicker\\' => array($vendorDir . '/2amigos/yii2-date-picker-widget/src'),
     'cebe\\markdown\\' => array($vendorDir . '/cebe/markdown'),
     'Faker\\' => array($vendorDir . '/fzaninotto/faker/src/Faker'),
 );

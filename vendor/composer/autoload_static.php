@@ -34,6 +34,7 @@ class ComposerStaticInit45dc08a3a6b445a9c7e9b98cc5b5ad0d
         'd' => 
         array (
             'dosamigos\\highcharts\\' => 21,
+            'dosamigos\\datepicker\\' => 21,
         ),
         'c' => 
         array (
@@ -101,6 +102,10 @@ class ComposerStaticInit45dc08a3a6b445a9c7e9b98cc5b5ad0d
         'dosamigos\\highcharts\\' => 
         array (
             0 => __DIR__ . '/..' . '/2amigos/yii2-highcharts-widget/src',
+        ),
+        'dosamigos\\datepicker\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/2amigos/yii2-date-picker-widget/src',
         ),
         'cebe\\markdown\\' => 
         array (

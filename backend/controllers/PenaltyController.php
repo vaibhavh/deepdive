@@ -202,7 +202,7 @@ class PenaltyController extends Controller {
         }
         $collection = $database->$table_name;
         $details = array();
-        $limitValue = 30000;
+        $limitValue = 10;
         $offsetValue = 0;
         for ($i = 0; $i < 10; $i++) {
             $pipeline = array();
@@ -227,6 +227,7 @@ class PenaltyController extends Controller {
                         'audit_penalty' => ['$sum' => '$audit_penalty'],
                         'latency' => ['$sum' => '$latency'],
                         'module_temperature' => ['$sum' => '$module_temperature'],
+                        'sapid' => ['$first' => '$sapid'],
                     ],
                 ],
                 ['$limit' => $limitValue],
@@ -234,6 +235,7 @@ class PenaltyController extends Controller {
             ];
             $options = ['allowDiskUse' => true];
             $data = $collection->aggregate($pipeline);
+
             if (isset($data['result']) && !empty($data['result'])) {
                 $details = array();
                 $collection = $database->week_penalty_master;
@@ -270,9 +272,9 @@ class PenaltyController extends Controller {
                                 'audit_penalty' => (int) $value['audit_penalty'],
                                 'latency' => (int) $value['latency'],
                                 'table_name' => $table_name,
-                                'created_at' => date('Y:m:d'),
+                                'sapid' => $value['sapid'],
+                                'created_at' => date('Y-m-d'),
                             ];
-
                             $collection->insert($data);
                         } else {
                             echo $value['_id']['hostname'] . " is already exist<br>";

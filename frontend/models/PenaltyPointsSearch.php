@@ -285,9 +285,9 @@ class PenaltyPointsSearch extends PenaltyPoints {
             'allModels' => $recordWithSetPoints,
             'pagination' => ['pageSize' => 20],
             'sort' => ['attributes' => ['hostname', 'loopback0', 'ios_compliance_status', 'bgp_available', 'isis_available', 'isis_available', 'device_type', 'crc', 'input_errors', 'output_errors', 'interface_resets'
-                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status', 'sapid']]
+                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status', 'sapid']],
         ]);
-
+        
         $this->load($params);
 
         return array('data' => $penaltyPointsProvider, 'date' => $date, 'details' => $recordWithSetPoints);

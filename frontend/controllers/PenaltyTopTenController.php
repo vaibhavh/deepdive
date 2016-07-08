@@ -11,17 +11,19 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\bootstrap\Modal;
+use app\models\Model;
+//use yii\components\CHelper;
+use \CHelper;
 
 /**
  * PenaltyTopTenController implements the CRUD actions for PenaltyTopTen model.
  */
-class PenaltyTopTenController extends Controller
-{
+class PenaltyTopTenController extends Controller {
+
     /**
      * @inheritdoc
      */
-    public function behaviors()
-    {
+    public function behaviors() {
         return [
             'verbs' => [
                 'class' => VerbFilter::className(),
@@ -36,50 +38,105 @@ class PenaltyTopTenController extends Controller
      * Lists all PenaltyPoints models.
      * @return mixed
      */
-    public function actionIndex()
-    {
+    public function actionIndex() {
         $model = new PenaltyTopTen();
+        $pointsModel = new PenaltyPointsSearch();
+        $circle = '';
+        $circleData = [];
+        $fromDate = $toDate = '';
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-                Yii::$app->session->setFlash('success', 'Thank');
-                return $this->refresh();
+            $data = Yii::$app->request->post();
+            if (!empty($data['PenaltyTopTen'])) {
+                $data = $data['PenaltyTopTen'];
+                $fromDate = $this->getFormatedDate($data['fromDate']);
+                $toDate = $this->getFormatedDate($data['toDate']);
+                $circle = $data['circle'];
+                $deviceType = $data['device'];
+                if (!empty($data['circle'])) {
+                    $result = $model->getCircleWiseData($circle, $fromDate, $toDate, Yii::$app->request->queryParams);
+                }
+                if (!empty($data['circle'])) {
+                    $result = $model->getDeviceTypeWiseData($deviceType, $fromDate, $toDate, Yii::$app->request->queryParams);
+                }
+            }
         }
-        
+        $circleMasterData = $model->getCircleData();
         return $this->render('index', [
-            'model' => $model,
+                    'model' => $model,
+                    'pointsModel' => $model,
+                    'circleMasterData' => $circleMasterData,
+                    'dataProvider' => $result,
+                    'date' => $fromDate,
+                    'toDate' => $toDate,
+//                    'toDate' => $circle,
         ]);
-        
     }
-    
+
     /**
      * Lists all PenaltyPoints models.
      * @return mixed
      */
-//    public function actionGraph()
-//    {
-//        $sectionPoints = array('IPSLA' => 5000, 'Interface Errors' => 1000, 'Resiliency' => 2000);
-//        $subSectionPoints = array('IPSLA' => array('Packet Loss' => 3000, 'Jitter' => 500, 'Latency' => 1500), 
-//                                  'Interface Errors' => array('Crc' => 100, 'Input Errors' => 100, 'Output Errors' => 200,
-//                                                              'Interface Reset' => 100, 'SFP Module Temperature' => 200,
-//                                                              'Optical Power' => 100, 'Buffer Consumption' => 100,'Power Error' => 100), 
-//                                  'Resiliency' => array('1 bgp available' => 1000, '1 isis available' => 500, 'Repair path not available' => 500));
-//        $sectionPointsData = PenaltyPoints::getSectionData($sectionPoints);
-//        $subSectionPointsData = PenaltyPoints::getSubSectionDrilldownData($subSectionPoints);
-//
-//        return $this->renderAjax('graph', [
-//            'sectionData' => $sectionPointsData,
-//            'subSectionData' => $subSectionPointsData,
-//        ]);
-//    }
+    public function actionGraph() {
+        $model = new PenaltyTopTen();
+        $deviceDetails = [];
+        if (!empty($_REQUEST['id'])) {
+            $id = $_REQUEST['id'];
+            $id = explode("&", $id);
+            $host_name = $id[0];
+            $fromDate = str_replace("fromDate=", "", $id[1]);
+            $todate = str_replace("todate=", "", $id[2]);
+            $data = $model->groupPenaltyData("week_penalty_master", $fromDate, $todate, [], $host_name);
+
+            if (!empty($data)) {
+                $details = $data[$host_name];
+                $ipsla = $details['packetloss'] + $details['latency'];
+                $interface_resets = $details['crc'] + $details['input_errors'] + $details['output_errors'] + $details['interface_resets'] + $details['module_temperature'] + $details['optical_power'] + $details['power'];
+                $resiliency = $details['bgp_available'] + $details['isis_available'] + $details['resilent_status'];
+                $subSectionPoints = array(
+                    'IPSLA' => array(
+                        'Packet Loss' => (isset($details['packetloss']) ? $details['packetloss'] : 0),
+                        'Latency' => $details['latency']
+                    ),
+                    'Interface Errors' => array(
+                        'Crc' => $details['crc'],
+                        'Input Errors' => $details['input_errors'],
+                        'Output Errors' => $details['output_errors'],
+                        'Interface Reset' => $details['interface_resets'],
+                        'SFP Module Temperature' => $details['module_temperature'],
+                        'Optical Power' => $details['optical_power'],
+                        'Power Error' => $details['power']),
+                    'Resiliency' => array(
+                        '1 bgp available' => $details['bgp_available'],
+                        '1 isis available' => $details['isis_available'],
+                        'Repair path not available' => $details['resilent_status']),
+                    'Configuration Audit' => array(
+                        'Configuration Audit' => $details['audit_penalty']),
+                    'IOS & SMU Compliance' => array(
+                        'IOS & SMU Compliance' => $details['ios_compliance_status'])
+                );
+                $deviceDetails = ['hostname' => $details['hostname'], 'loopback0' => $details['loopback0'], 'date' => $fromDate, 'todate' => $todate];
+            }
+        }
+
+        $sectionPoints = array('IPSLA' => $ipsla, 'Interface Errors' => $interface_resets, 'Resiliency' => $resiliency, 'Configuration Audit' => $details['audit_penalty'], 'IOS & SMU Compliance' => $details['ios_compliance_status']);
+        $sectionPointsData = PenaltyPoints::getSectionData($sectionPoints);
+        $subSectionPointsData = PenaltyPoints::getSubSectionDrilldownData($subSectionPoints);
+
+        return $this->renderAjax('graph', [
+                    'sectionData' => $sectionPointsData,
+                    'subSectionData' => $subSectionPointsData,
+                    'deviceDetails' => $deviceDetails
+        ]);
+    }
 
     /**
      * Displays a single PenaltyPoints model.
      * @param integer $id
      * @return mixed
      */
-    public function actionView($id)
-    {
+    public function actionView($id) {
         return $this->render('view', [
-            'model' => $this->findModel($id),
+                    'model' => $this->findModel($id),
         ]);
     }
 
@@ -88,15 +145,14 @@ class PenaltyTopTenController extends Controller
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
-    public function actionCreate()
-    {
+    public function actionCreate() {
         $model = new PenaltyTopTen();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         } else {
             return $this->render('create', [
-                'model' => $model,
+                        'model' => $model,
             ]);
         }
     }
@@ -107,15 +163,14 @@ class PenaltyTopTenController extends Controller
      * @param integer $id
      * @return mixed
      */
-    public function actionUpdate($id)
-    {
+    public function actionUpdate($id) {
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         } else {
             return $this->render('update', [
-                'model' => $model,
+                        'model' => $model,
             ]);
         }
     }
@@ -126,10 +181,8 @@ class PenaltyTopTenController extends Controller
      * @param integer $id
      * @return mixed
      */
-    public function actionDelete($id)
-    {
+    public function actionDelete($id) {
         $this->findModel($id)->delete();
-
         return $this->redirect(['index']);
     }
 
@@ -140,12 +193,19 @@ class PenaltyTopTenController extends Controller
      * @return PenaltyPoints the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
-    protected function findModel($id)
-    {
+    protected function findModel($id) {
         if (($model = PenaltyTopTen::findOne($id)) !== null) {
             return $model;
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
     }
+
+    public function getFormatedDate($date = '') {
+        $date = str_replace(':', "-", $date);
+        $date = new \DateTime($date);
+        $date = $date->format('Y-m-d');
+        return $date;
+    }
+
 }

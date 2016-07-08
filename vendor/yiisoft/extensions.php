@@ -111,4 +111,13 @@ return array (
       '@dosamigos/highcharts' => $vendorDir . '/2amigos/yii2-highcharts-widget/src',
     ),
   ),
+  '2amigos/yii2-date-picker-widget' => 
+  array (
+    'name' => '2amigos/yii2-date-picker-widget',
+    'version' => '1.0.5.0',
+    'alias' => 
+    array (
+      '@dosamigos/datepicker' => $vendorDir . '/2amigos/yii2-date-picker-widget/src',
+    ),
+  ),
 );

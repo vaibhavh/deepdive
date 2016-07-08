@@ -64,6 +64,7 @@ Modal::end();
         'timeout' => false,
         'enablePushState' => false,
         'clientOptions' => ['method' => 'POST']]);
+//    echo "<pre/>",print_r($searchModel);die;
     ?>
 
     <?=
@@ -78,6 +79,8 @@ Modal::end();
         'striped' => false,
         'condensed' => false,
         'responsive' => true,
+//        'floatHeader' => true,
+//        'floatHeaderOptions' => ['scrollingTop' => 1],
         'panel' => [
             'type' => GridView::TYPE_PRIMARY
         ],
