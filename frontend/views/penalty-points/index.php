@@ -44,6 +44,7 @@ Modal::end();
 ?>
 <p>
     <?php
+    $date = date('d-m-Y');
     $fromDate = str_replace(':', "-", $date);
     $datetime = new DateTime($fromDate);
     $fromDate = $datetime->format('d-m-Y');

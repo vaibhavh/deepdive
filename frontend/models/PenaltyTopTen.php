@@ -41,7 +41,7 @@ class PenaltyTopTen extends Model {
         ];
     }
 
-    public function getCircleData() {
+    public static function getCircleData() {
         $db = Yii::$app->db_rjil;
         $sql = "SELECT `circle_code`,`circle_name` FROM `tbl_circle_master`";
         $command = $db->createCommand($sql);

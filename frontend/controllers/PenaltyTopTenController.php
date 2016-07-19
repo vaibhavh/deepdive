@@ -42,6 +42,7 @@ class PenaltyTopTenController extends Controller {
         $model = new PenaltyTopTen();
         $pointsModel = new PenaltyPointsSearch();
         $circle = '';
+        $result = '';
         $circleData = [];
         $fromDate = $toDate = '';
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
