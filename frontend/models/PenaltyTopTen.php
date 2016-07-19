@@ -64,9 +64,10 @@ class PenaltyTopTen extends Model {
                 $sapids[] = $value['site_sap_id'];
             }
         }
+        
         if (!empty($sapids)) {
             $data = $this->getPenaltyData($sapids, $fromDate, $toDate);
-            $penaltyPointsProvider = new ArrayDataProvider(['allModels' => $data]);
+            //$penaltyPointsProvider = new ArrayDataProvider(['allModels' => $data]);
 
             $penaltyPointsProvider = new ArrayDataProvider([
                 'allModels' => $data,
@@ -78,6 +79,7 @@ class PenaltyTopTen extends Model {
                     ]]
             ]);
             $this->load($params);
+            
             return $penaltyPointsProvider;
         } else {
             return array();
@@ -104,7 +106,7 @@ class PenaltyTopTen extends Model {
 
         $pipeline = array();
         $match = '';
-        $toDate = "2016-07-10";
+        $toDate = "2016-07-18";
         $match = [];
         if (!empty($sapids)) {
             $match['sapid'] = ['$in' => $sapids];
@@ -190,7 +192,7 @@ class PenaltyTopTen extends Model {
 
         $pipeline = array();
         $match = '';
-        $toDate = "2016-07-10";
+        $toDate = "2016-07-18";
         $match = [];
         if (!empty($fromDate) && !empty($toDate)) {
             $match['created_at'] = ['$gte' => $fromDate, '$lte' => $toDate];

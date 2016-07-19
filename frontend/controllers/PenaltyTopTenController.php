@@ -56,12 +56,13 @@ class PenaltyTopTenController extends Controller {
                 if (!empty($data['circle'])) {
                     $result = $model->getCircleWiseData($circle, $fromDate, $toDate, Yii::$app->request->queryParams);
                 }
-                if (!empty($data['circle'])) {
-                    $result = $model->getDeviceTypeWiseData($deviceType, $fromDate, $toDate, Yii::$app->request->queryParams);
-                }
+//                if (!empty($data['circle'])) {
+//                    $result = $model->getDeviceTypeWiseData($deviceType, $fromDate, $toDate, Yii::$app->request->queryParams);
+//                }
             }
         }
         $circleMasterData = $model->getCircleData();
+        
         return $this->render('index', [
                     'model' => $model,
                     'pointsModel' => $model,

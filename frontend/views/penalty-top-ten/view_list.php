@@ -58,6 +58,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'timeout' => false,
         'enablePushState' => false,
         'clientOptions' => ['method' => 'POST']]);
+    
     ?>
 
     <?=

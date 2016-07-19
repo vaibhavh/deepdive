@@ -26,7 +26,7 @@ class CustomActionColumn extends ActionColumn {
                     'style' => 'cursor:pointer',
                     'class' => 'modalClick',
                         ], $this->buttonOptions);
-                return str_replace('href', 'value', Html::a('<span class="glyphicon glyphicon-eye-open"></span>', $url, $options));
+                return str_replace('href', 'value', Html::a('<span class="glyphicon glyphicon-object-align-bottom"></span>', $url, $options));
             };
         }
     }
