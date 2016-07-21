@@ -166,7 +166,7 @@ class PenaltyTopTen extends Model {
             }
         }
         $topTenDevices = [];
-        if (!empty($data)) {
+        if (!empty($data) && !empty($total)) {
             rsort($total);
 
             $topTenPenalties = array_slice($total, 0, 10);
@@ -180,6 +180,10 @@ class PenaltyTopTen extends Model {
                     }
                 }
             }
+        }
+        else
+        {
+            Yii::$app->session->setFlash('error','No Data Found!');
         }
         return $topTenDevices;
     }

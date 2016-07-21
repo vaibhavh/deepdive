@@ -16,10 +16,12 @@ $this->params['breadcrumbs'][] = $this->title;
 $this->title = 'My Yii Application';
 $curretntDate = date("d-m-Y");
 
-$fromDate = str_replace(':', "-", $deviceDetails['date']);
+$fromDate = (!empty($deviceDetails['date']))?str_replace(':', "-", $deviceDetails['date']):'';
 $datetime = new DateTime($fromDate);
 $fromDate = $datetime->format('d-m-Y');
 
+$deviceHeader = (!empty($deviceDetails['circle']))?$deviceDetails['circle'] . ' : ' .$deviceDetails['hostname'] .'/'. $deviceDetails['loopback0']:'';  
+$dateHeader   = '<span style="font-size:12px;color:#000066;font-weight:bold;">' . $fromDate . ' to ' . $curretntDate .'</span>';
 
 echo Highcharts::widget([
     'clientOptions' => [
@@ -27,10 +29,10 @@ echo Highcharts::widget([
             'type' => 'pie'
         ],
         'title' => [
-            'text' => "Penalty Graph <b>{$deviceDetails['hostname']} {$deviceDetails['loopback0']}<b><br> {$fromDate} to {$curretntDate}"
+            'text' => "{$deviceHeader} <br> {$dateHeader}"
         ],
         'subtitle' => [
-            'text' => 'Click the slices to view subsections.'
+            'text' => ''
         ],
         'plotOptions' => [
             'pie' => [
@@ -44,7 +46,7 @@ echo Highcharts::widget([
             'series' => [
                 'dataLabels' => [
                     'enabled' => true,
-                    'format' => '{point.name}: {point.y} {percentage:.2f}%'
+                    'format' => '{point.name}: {point.y}, {percentage:.2f}%'
                 ]
             ]
         ],
@@ -62,17 +64,17 @@ echo Highcharts::widget([
         ]
     ]
 ]);
-
+echo "<hr>";
 echo Highcharts::widget([
     'clientOptions' => [
         'chart' => [
             'type' => 'column'
         ],
         'title' => [
-            'text' => "Penalty Graph {$deviceDetails['hostname']} {$deviceDetails['loopback0']} {$fromDate} to {$curretntDate}"
+            'text' => ""
         ],
         'subtitle' => [
-            'text' => 'Click the columns to view subsections.'
+            'text' => ''
         ],
         'xAxis' => [
             'type' => 'category'
@@ -99,7 +101,7 @@ echo Highcharts::widget([
             'pointFormat' => '<span style="color:{point.color}">{point.name}</span>: <b>{point.y}</b> of total<br/>'
         ],
         'series' => [[
-        'name' => 'Brands',
+        'name' => 'Penalty Points',
         'colorByPoint' => true,
         'data' => $sectionData
             ]],

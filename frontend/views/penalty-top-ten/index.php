@@ -15,6 +15,14 @@ use yii\widgets\ActiveForm;
 $this->title = 'Penalty Top Ten';
 $this->params['breadcrumbs'][] = $this->title;
 
+if(Yii::$app->session->hasFlash('error'))
+{
+    echo '<div class="alert alert-error">' . Yii::$app->session->getFlash('error') . '</div>';
+}
+if(Yii::$app->session->hasFlash('success'))
+{
+    echo '<div class="alert alert-success">' . Yii::$app->session->getFlash('success') . '</div>';
+}
 ?>
 <style type="text/css">
     @media screen and (min-width: 768px) {
@@ -38,7 +46,7 @@ Modal::begin([
     'id' => 'model',
     'size' => 'model-lg',
 ]);
-echo '<div id="modelContent" align="center"></div>';
+echo '<div id="modelContent" align="center"><img src="/deepdive/frontend/web/images/ajax-loader.gif"></div>';
 Modal::end();
 ?>
 <div class="penalty-points-index">

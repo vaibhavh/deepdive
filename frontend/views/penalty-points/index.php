@@ -1,7 +1,7 @@
 <?php
 
 use yii\helpers\Html;
-use yii\widgets\Pjax;
+//use yii\widgets\Pjax;
 use app\controllers\SiteController;
 use kartik\grid\GridView;
 use yii\bootstrap\Modal;
@@ -39,7 +39,7 @@ Modal::begin([
     'id' => 'model',
     'size' => 'model-lg',
 ]);
-echo '<div id="modelContent" align="center"></div>';
+echo '<div id="modelContent" align="center"><img src="/deepdive/frontend/web/images/ajax-loader.gif"></div>';
 Modal::end();
 ?>
 <p>
@@ -48,23 +48,21 @@ Modal::end();
     $fromDate = str_replace(':', "-", $date);
     $datetime = new DateTime($fromDate);
     $fromDate = $datetime->format('d-m-Y');
-    $datetime->modify('+7 day');
+    $datetime->modify('+6 day');
     $toDate = $datetime->format('d-m-Y');
     ?>
 </p>
 <div class="penalty-points-index">
-
     <h1><?= Html::encode($this->title);
     ?><span style="color: #6666cc;"><h4><b><?= "Current Week [ From $fromDate till $toDate ]"; ?></b></h4></span> </h1>
         <?php // echo $this->render('_search', ['model' => $searchModel]);    ?>
 
 
     <?php // Pjax::begin(['id' => 'grid', 'timeout' => false, 'clientOptions' => ['method' => 'POST']]); ?> 
-    <?php
-    \yii\widgets\Pjax::begin(['id' => 'penlaty',
-        'timeout' => false,
-        'enablePushState' => false,
-        'clientOptions' => ['method' => 'POST']]);
+    <?php //\yii\widgets\Pjax::begin(['id' => 'penlaty',
+          //'timeout' => false,
+          //'enablePushState' => false,
+          //'clientOptions' => ['method' => 'POST']]);
 //    echo "<pre/>",print_r($searchModel);die;
     ?>
 
@@ -135,23 +133,38 @@ Modal::end();
                 'attribute' => 'resilent_status',
                 'value' => 'resilent_status'
             ],
-            'crc',
+	    [
+                'label' => 'CRC',
+                'filter' => false,
+                'attribute' => 'crc',
+                'value' => 'crc'
+            ],
             'input_errors',
             'output_errors',
             'interface_resets',
             'power',
             'optical_power',
             'module_temperature',
-            'packetloss',
-            'audit_penalty',
+	    [
+                'label' => 'Packet Loss',
+                'filter' => false,
+                'attribute' => 'packetloss',
+                'value' => 'packetloss'
+            ],
             'latency',
+	    [
+                'label' => 'Security Compliance',
+                'filter' => false,
+                'attribute' => 'audit_penalty',
+                'value' => 'audit_penalty'
+            ],
             'total',
             ['class' => 'frontend\models\CustomActionColumn'],
         ],
     ]);
+    //$this->registerJsFile("js/bootstrap.min.js", ['position' => \yii\web\View::POS_END]);
     ?>
-    <?php Pjax::end(); ?></div>
-
+    <?php //Pjax::end(); ?></div>
 <style>
     .container{
         width: 100%;
