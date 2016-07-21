@@ -175,8 +175,7 @@ class PenaltyController extends Controller {
                             $data['audit_penalty'] = (int) $auditPoints[$penelty_point['loopback0']];
                         $data['table_name'] = $table_name;
                         $data['created_date'] = date("Y-m-d");
-//                        $data['created_date'] = "2016-06-28";
-
+                        //$data['created_date'] = date('Y-m-d', strtotime("-1 days"));
                         $collection->insert($data);
                         $data = array();
                     } else {
@@ -202,7 +201,7 @@ class PenaltyController extends Controller {
         }
         $collection = $database->$table_name;
         $details = array();
-        $limitValue = 10;
+        $limitValue = 30000;
         $offsetValue = 0;
         for ($i = 0; $i < 10; $i++) {
             $pipeline = array();
@@ -414,6 +413,7 @@ class PenaltyController extends Controller {
     public function getAuditPoints() {
         $db = Yii::$app->db_rjil;
         $sql = "select penalty_counts,loopback0 from tbl_audit_penalty_points WHERE date(created_dt)=date(now())";
+		//$sql = "select penalty_counts,loopback0 from tbl_audit_penalty_points WHERE date(created_dt)='2016-06-27'";
         $command = $db->createCommand($sql);
         $auditResults = $command->queryAll();
         $auditPenalty = 0;

@@ -15,6 +15,7 @@ use \yii\mongodb\Connection;
 class PenaltyJobs {
 
     public static function fetchDailyData() {
+        echo "\nStart collection at " . date("Y-m-d H:i:s");
         ini_set("memory_limit", "-1");
         error_reporting(E_ALL);
         ini_set("display_errors", 1);
@@ -25,19 +26,18 @@ class PenaltyJobs {
         $latency = self::geLatency();
         $day = date('D');
         $db = Yii::$app->db_rjil;
-//        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
-        $sql = "SELECT *,tu.modified_sapid FROM tbl_built_penalty_points as t INNER JOIN ndd_host_name as tu ON(t.hostname=tu.host_name AND tu.is_deleted=0) WHERE date(created_date)='2016-06-28' limit 5000";
+        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
+        //$sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
+        //$sql = "SELECT *,tu.modified_sapid FROM tbl_built_penalty_points as t INNER JOIN ndd_host_name as tu ON(t.hostname=tu.host_name AND tu.is_deleted=0) WHERE date(created_date)='2016-06-28' limit 5000";
         $command = $db->createCommand($sql);
-
         $penelty_points = $command->queryAll();
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
         $collection = $database->week_master;
         $date = date("Y_m_d");
         $table_name = '';
-
         if ($day == 'Mon') {
-            $collection->update([], ['$set' => ['status' => 1]]);
+            $collection->update([], ['$set' => ['status' => 1]], ['multiple' => true]);
             $table_name = "weekday_penalty_" . $date;
             $collection->insert(['table_name' => "weekday_penalty_" . $date, 'status' => 0, 'date' => date('Y-m-d')]);
         } else {
@@ -46,13 +46,13 @@ class PenaltyJobs {
                 $table_name = $table['table_name'];
             }
         }
-
+        $created_date = date('Y-m-d');
         if (!empty($table_name)) {
             $collection = $database->$table_name;
             $data = array();
             if (!empty($penelty_points)) {
                 foreach ($penelty_points as $penelty_point) {
-                    $is_exist = $collection->find(['hostname' => $penelty_point['hostname'], 'created_date' => date('Y-m-d')], ['hostname']);
+                    $is_exist = $collection->find(['hostname' => $penelty_point['hostname'], 'created_date' => $created_date], ['hostname']);
                     $hostname = '';
                     foreach ($is_exist as $exist) {
                         $hostname = $exist['hostname'];
@@ -60,7 +60,12 @@ class PenaltyJobs {
                     if (empty($hostname)) {
                         $packet_drop = 0;
                         $latency_point = 0;
-
+                        if (empty($penelty_point['modified_sapid'])) {
+                            $sql = "select modified_sapid FROM ndd_host_name WHERE host_name='{$penelty_point['hostname']}'";
+                            $command = $db->createCommand($sql);
+                            $sapid_details = $command->queryOne();
+                            $penelty_point['modified_sapid'] = $sapid_details['modified_sapid'];
+                        }
                         $data = [
                             'hostname' => $penelty_point['hostname'],
                             'loopback0' => $penelty_point['loopback0'],
@@ -72,6 +77,10 @@ class PenaltyJobs {
                             'bgp_available' => (int) $penelty_point['bgp_available'],
                             'isis_available' => (int) $penelty_point['isis_available'],
                             'resilent_status' => (int) $penelty_point['resilent_status'],
+                            'isis_stability_changed' => (int) $penelty_point['isis_stability_changed'],
+                            'ldp_stability_changed' => (int) $penelty_point['ldp_stability_changed'],
+                            'bfd_stability_changed' => (int) $penelty_point['bfd_stability_changed'],
+                            'bgp_stability_changed' => (int) $penelty_point['bgp_stability_changed'],
                         ];
                         $data['crc'] = 0;
                         $data['input_errors'] = 0;
@@ -101,8 +110,8 @@ class PenaltyJobs {
                         if (isset($auditPoints[$penelty_point['loopback0']]))
                             $data['audit_penalty'] = (int) $auditPoints[$penelty_point['loopback0']];
                         $data['table_name'] = $table_name;
-                        $data['created_date'] = date("Y-m-d");
-//                        $data['created_date'] = "2016-06-28";
+                        //$data['created_date'] = date("Y-m-d");
+                        $data['created_date'] = $created_date;
 
                         $collection->insert($data);
                         $data = array();
@@ -112,6 +121,7 @@ class PenaltyJobs {
                 }
             }
         }
+        echo "\nEnd collection at " . date("Y-m-d H:i:s");
         die("done");
     }
 
@@ -247,7 +257,7 @@ class PenaltyJobs {
     public static function getIpslaRecords() {
         $db = Yii::$app->db_rjil;
 //        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
-        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)='2016-06-28'";
+        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
         $command = $db->createCommand($sql);
         $ipsla_points = $command->queryAll();
 
@@ -284,7 +294,7 @@ class PenaltyJobs {
     public static function getPacketDrop() {
         $db = Yii::$app->db_rjil;
 //        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
-        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)='2016-06-28' group by host_name";
+        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
         $command = $db->createCommand($sql);
         $ipsla_points = $command->queryAll();
 
@@ -300,7 +310,7 @@ class PenaltyJobs {
     public static function geLatency() {
         $db = Yii::$app->db_rjil;
 //        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
-        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)='2016-06-28' group by host_name";
+        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
         $command = $db->createCommand($sql);
         $ipsla_latency_points = $command->queryAll();
         $data = array();
@@ -340,6 +350,7 @@ class PenaltyJobs {
 
     public static function getAuditPoints() {
         $db = Yii::$app->db_rjil;
+        //$sql = "select penalty_counts,loopback0 from tbl_audit_penalty_points WHERE date(created_dt)=date(now())";
         $sql = "select penalty_counts,loopback0 from tbl_audit_penalty_points WHERE date(created_dt)=date(now())";
         $command = $db->createCommand($sql);
         $auditResults = $command->queryAll();
@@ -404,4 +415,5 @@ class PenaltyJobs {
             $collection->insert($mydata);
         }
     }
+
 }
