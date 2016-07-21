@@ -41,7 +41,7 @@ class PenaltyTopTen extends Model {
         ];
     }
 
-    public function getCircleData() {
+    public static function getCircleData() {
         $db = Yii::$app->db_rjil;
         $sql = "SELECT `circle_code`,`circle_name` FROM `tbl_circle_master`";
         $command = $db->createCommand($sql);
@@ -64,9 +64,10 @@ class PenaltyTopTen extends Model {
                 $sapids[] = $value['site_sap_id'];
             }
         }
+        
         if (!empty($sapids)) {
             $data = $this->getPenaltyData($sapids, $fromDate, $toDate);
-            $penaltyPointsProvider = new ArrayDataProvider(['allModels' => $data]);
+            //$penaltyPointsProvider = new ArrayDataProvider(['allModels' => $data]);
 
             $penaltyPointsProvider = new ArrayDataProvider([
                 'allModels' => $data,
@@ -78,6 +79,7 @@ class PenaltyTopTen extends Model {
                     ]]
             ]);
             $this->load($params);
+            
             return $penaltyPointsProvider;
         } else {
             return array();
@@ -104,7 +106,7 @@ class PenaltyTopTen extends Model {
 
         $pipeline = array();
         $match = '';
-        $toDate = "2016-07-10";
+        $toDate = "2016-07-18";
         $match = [];
         if (!empty($sapids)) {
             $match['sapid'] = ['$in' => $sapids];
@@ -164,7 +166,7 @@ class PenaltyTopTen extends Model {
             }
         }
         $topTenDevices = [];
-        if (!empty($data)) {
+        if (!empty($data) && !empty($total)) {
             rsort($total);
 
             $topTenPenalties = array_slice($total, 0, 10);
@@ -179,6 +181,10 @@ class PenaltyTopTen extends Model {
                 }
             }
         }
+        else
+        {
+            Yii::$app->session->setFlash('error','No Data Found!');
+        }
         return $topTenDevices;
     }
 
@@ -190,7 +196,7 @@ class PenaltyTopTen extends Model {
 
         $pipeline = array();
         $match = '';
-        $toDate = "2016-07-10";
+        $toDate = "2016-07-18";
         $match = [];
         if (!empty($fromDate) && !empty($toDate)) {
             $match['created_at'] = ['$gte' => $fromDate, '$lte' => $toDate];

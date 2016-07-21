@@ -14,6 +14,15 @@ use yii\widgets\ActiveForm;
 
 $this->title = 'Penalty Top Ten';
 $this->params['breadcrumbs'][] = $this->title;
+
+if(Yii::$app->session->hasFlash('error'))
+{
+    echo '<div class="alert alert-error">' . Yii::$app->session->getFlash('error') . '</div>';
+}
+if(Yii::$app->session->hasFlash('success'))
+{
+    echo '<div class="alert alert-success">' . Yii::$app->session->getFlash('success') . '</div>';
+}
 ?>
 <style type="text/css">
     @media screen and (min-width: 768px) {
@@ -37,11 +46,13 @@ Modal::begin([
     'id' => 'model',
     'size' => 'model-lg',
 ]);
-echo '<div id="modelContent" align="center"></div>';
+echo '<div id="modelContent" align="center"><img src="/deepdive/frontend/web/images/ajax-loader.gif"></div>';
 Modal::end();
 ?>
 <div class="penalty-points-index">
     <?php $form = ActiveForm::begin(); ?>
+    <input id="penaltytopten-circleval" class="form-control" name="PenaltyTopTen[circleval]" type="hidden" value="<?php if(!empty($_REQUEST['PenaltyTopTen']['circle']))  echo $_REQUEST['PenaltyTopTen']['circle']; else echo ''; ?>">
+    <input id="penaltytopten-deviceval" class="form-control" name="PenaltyTopTen[deviceval]" type="hidden" value="<?php if(!empty($_REQUEST['PenaltyTopTen']['device']))  echo $_REQUEST['PenaltyTopTen']['device']; else echo ''; ?>">
     <div><h1><?= Html::encode($this->title) ?></h1>           
         <?php
         echo '<div style="width:200px;float:left;valign:center;">' .
@@ -78,7 +89,9 @@ Modal::end();
     </div>    
     <?php ActiveForm::end(); ?>
     <?php
+    
     if (!empty($dataProvider)) {
+//        echo "<pre>",print_r($dataProvider);die;
         echo $this->renderAjax('view_list', [
             'dataProvider' => $dataProvider,
             'date' => $date,

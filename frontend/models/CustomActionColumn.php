@@ -10,6 +10,7 @@ use yii\grid\ActionColumn;
 
 class CustomActionColumn extends ActionColumn {
 
+    public $header   = 'Graph';
     public $template = '{graph}';
 
     /**

@@ -51,12 +51,12 @@ class PenaltyPoints extends \yii\db\ActiveRecord {
             'hostname' => 'Hostname',
             'loopback0' => 'Loopback0',
             'device_type' => 'Device Type',
-            'ios_compliance_status' => 'Ios Compliance Status',
+            'ios_compliance_status' => 'IOS Compliance Status',
             'ios_current_version' => 'Ios Current Version',
             'ios_built_version' => 'Ios Built Version',
-            'bgp_available' => '1 Bgp Available',
-            'isis_available' => '1 Isis Available',
-            'resilent_status' => 'Repair Path Status',
+            'bgp_available' => 'Bgp Available',
+            'isis_available' => 'Isis Available',
+            'resilent_status' => 'Resilent Status',
             'created_date' => 'Created Date',
         ];
     }
@@ -233,4 +233,13 @@ class PenaltyPoints extends \yii\db\ActiveRecord {
         return $drilldown;
     }
 
+    public static function getCircleForHostname($hostname)
+    {
+        $db = Yii::$app->db_rjil;
+        $sql = "SELECT `TCM`.`circle_name`, `TCM`.`circle_code`, `NHN`.`modified_sapid` FROM `ndd_host_name` as `NHN` INNER JOIN `tbl_circle_master` AS `TCM` ON(`TCM`.`circle_code` = SUBSTRING(`NHN`.`modified_sapid`,3,2)) WHERE `NHN`.`is_deleted` = 0 AND `NHN`.`host_name` = '" . $hostname . "'";
+        $command = $db->createCommand($sql);
+        $deviceData = $command->queryOne();
+        $circle = (!empty($deviceData['circle_name']))?$deviceData['circle_name']:'';
+        return $circle;
+    }
 }

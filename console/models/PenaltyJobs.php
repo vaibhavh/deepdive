@@ -5,97 +5,24 @@
  * @author Prashant Swami <prashant.s@infinitylabs.in>
  */
 
-namespace backend\controllers;
-
-//namespace backend\components;
+namespace console\models;
 
 use Yii;
-use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use \yii\mongodb\Connection;
 
-class PenaltyController extends Controller {
+class PenaltyJobs {
 
-    /**
-     * @inheritdoc
-     */
-    public function behaviors() {
-        return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'rules' => [
-                    [
-                        'actions' => ['logout', 'index', 'add-daily-data', 'weekly-data', 'add-penalty-point-master'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function actions() {
-        return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
-        ];
-    }
-
-    public function actionIndex() {
-        $connection = Yii::$app->mongodb;
-        $database = $connection->getDatabase('deepdive');
-        $collection = $database->getCollection('week_master');
-        $tables = $collection->find(['status' => 0], ['table_name']);
-        foreach ($tables as $table) {
-            $table_name = $table['table_name'];
-        }
-        $collection = $database->getCollection('weekdayPenalty');
-        $cursor = $collection->find();
-        $data = array();
-        foreach ($cursor as $doc) {
-            echo "<pre/>";
-            print_r($doc);
-        }
-    }
-
-    public function getBuiltPenalty() {
-        $db = Yii::$app->db_rjil;
-        $sql = "SELECT * FROM tbl_built_penalty_points limit 10";
-        $command = $db->createCommand($sql);
-        $penelty_points = $command->queryAll();
-        $data = array();
-        if (!empty($penelty_points)) {
-            foreach ($penelty_points as $penelty) {
-                $data[$penelty['hostname']] = [
-                    'ios_compliance_status' => $penelty['ios_compliance_status'],
-                    'bgp_available' => $penelty['bgp_available'],
-                    'isis_available' => $penelty['isis_available'],
-                    'resilent_status' => $penelty['resilent_status'],
-                ];
-            }
-        }
-    }
-
-    public function actionAddDailyData() {
+    public static function fetchDailyData() {
         ini_set("memory_limit", "-1");
         error_reporting(E_ALL);
         ini_set("display_errors", 1);
         ini_set('max_execution_time', 86400);
-        $auditPoints = $this->getAuditPoints();
-        $ipslaRecords = $this->getIpslaRecords();
-        $packetDrop = $this->getPacketDrop();
-        $latency = $this->geLatency();
+        $auditPoints = self::getAuditPoints();
+        $ipslaRecords = self::getIpslaRecords();
+        $packetDrop = self::getPacketDrop();
+        $latency = self::geLatency();
         $day = date('D');
         $db = Yii::$app->db_rjil;
 //        $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
@@ -188,7 +115,7 @@ class PenaltyController extends Controller {
         die("done");
     }
 
-    public function actionWeeklyData() {
+    public static function fetchWeeklyData() {
         ini_set("memory_limit", "-1");
         error_reporting(E_ALL);
         ini_set("display_errors", 1);
@@ -277,7 +204,7 @@ class PenaltyController extends Controller {
                             ];
                             $collection->insert($data);
                         } else {
-                            echo $value['_id']['hostname'] . " is already exist<br>";
+                            echo $value['_id']['hostname'] . " is already exist \n <br>";
                         }
                     }
                 }
@@ -317,7 +244,7 @@ class PenaltyController extends Controller {
         die("done");
     }
 
-    public function getIpslaRecords() {
+    public static function getIpslaRecords() {
         $db = Yii::$app->db_rjil;
 //        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
         $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)='2016-06-28'";
@@ -354,7 +281,7 @@ class PenaltyController extends Controller {
         return $data;
     }
 
-    public function getPacketDrop() {
+    public static function getPacketDrop() {
         $db = Yii::$app->db_rjil;
 //        $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
         $sql = "select count(*) as count,host_name from dd_ipsla_packet_drop WHERE host_name!='' AND date(created_at)='2016-06-28' group by host_name";
@@ -370,7 +297,7 @@ class PenaltyController extends Controller {
         return $data;
     }
 
-    public function geLatency() {
+    public static function geLatency() {
         $db = Yii::$app->db_rjil;
 //        $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)=date(now()) group by host_name";
         $sql = "select count(*) as count,host_name from dd_ipsla_latency WHERE host_name!='' AND date(created_at)='2016-06-28' group by host_name";
@@ -385,7 +312,7 @@ class PenaltyController extends Controller {
         return $data;
     }
 
-    public function getIntegratedDevices() {
+    public static function getIntegratedDevices() {
         $db = Yii::$app->db_rjil;
         $sql = "select im.hostname from tbl_assigned_sites as t INNER JOIN tbl_ip_master AS im ON (t.site_id = im.id)
                 WHERE t.status = '1' AND (im.status = 1 OR im.status = '1') AND substring(im.hostname, 9,3) IN ('PAR','ESR') LIMIT 10";
@@ -411,7 +338,7 @@ class PenaltyController extends Controller {
         return $data;
     }
 
-    public function getAuditPoints() {
+    public static function getAuditPoints() {
         $db = Yii::$app->db_rjil;
         $sql = "select penalty_counts,loopback0 from tbl_audit_penalty_points WHERE date(created_dt)=date(now())";
         $command = $db->createCommand($sql);
@@ -438,7 +365,7 @@ class PenaltyController extends Controller {
         return $data;
     }
 
-    public function actionAddPenaltyPointMaster() {
+    public static function actionAddPenaltyPointMaster() {
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
         $collection = $database->penaltyPointMaster;
@@ -477,5 +404,4 @@ class PenaltyController extends Controller {
             $collection->insert($mydata);
         }
     }
-
 }

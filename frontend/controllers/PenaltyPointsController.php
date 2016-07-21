@@ -50,7 +50,7 @@ class PenaltyPointsController extends Controller {
         error_reporting(E_ALL);
         ini_set("display_errors", 1);
         $pointsModel = new PenaltyPointsSearch();
-//        echo "<pre/>",print_r(Yii::$app->request->post());die;
+
         $dataProvider = $pointsModel->getData(Yii::$app->request->queryParams);
         return $this->render('index', [
                     'dataProvider' => $dataProvider['data'],
@@ -67,7 +67,8 @@ class PenaltyPointsController extends Controller {
         $pointsModel = new PenaltyPointsSearch();
         $data = $pointsModel->getData(Yii::$app->request->queryParams, $id);
         $ipsla = $interface_resets = $resiliency = 0;
-        if (!empty($data['details'])) {
+        $sectionPointsData = $subSectionPointsData = $deviceDetails = array();
+        if (!empty($id) && !empty($data['details'])) {
             $details = $data['details'][$id];
             $ipsla = $details['packetloss'] + $details['latency'];
             $interface_resets = $details['crc'] + $details['input_errors'] + $details['output_errors'] + $details['interface_resets'] + $details['module_temperature'] + $details['optical_power'] + $details['power'];
@@ -94,12 +95,12 @@ class PenaltyPointsController extends Controller {
                 'IOS & SMU Compliance' => array(
                     'IOS & SMU Compliance' => $details['ios_compliance_status'])
             );
-            $deviceDetails = ['hostname' => $details['hostname'], 'loopback0' => $details['loopback0'], 'date' => $data['date']];
+            $deviceCircle  = PenaltyPoints::getCircleForHostname($id);
+            $deviceDetails = ['hostname' => $details['hostname'], 'loopback0' => $details['loopback0'], 'date' => $data['date'], 'circle' => $deviceCircle];
+            $sectionPoints = array('IPSLA' => $ipsla, 'Interface Errors' => $interface_resets, 'Resiliency' => $resiliency, 'Configuration Audit' => $details['audit_penalty'], 'IOS & SMU Compliance' => $details['ios_compliance_status']);
+            $sectionPointsData = PenaltyPoints::getSectionData($sectionPoints);
+            $subSectionPointsData = PenaltyPoints::getSubSectionDrilldownData($subSectionPoints);
         }
-
-        $sectionPoints = array('IPSLA' => $ipsla, 'Interface Errors' => $interface_resets, 'Resiliency' => $resiliency, 'Configuration Audit' => $details['audit_penalty'], 'IOS & SMU Compliance' => $details['ios_compliance_status']);
-        $sectionPointsData = PenaltyPoints::getSectionData($sectionPoints);
-        $subSectionPointsData = PenaltyPoints::getSubSectionDrilldownData($subSectionPoints);
 
         return $this->renderAjax('graph', [
                     'sectionData' => $sectionPointsData,

@@ -51,7 +51,7 @@ AppAsset::register($this);
                 $menuItems[] = ['label' => 'Signup', 'url' => ['/site/signup']];
                 $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];
             } else {
-                $menuItems[] = ['label' => 'Top Ten Site', 'url' => ['/penalty-top-ten']];
+                $menuItems[] = ['label' => 'Top Ten', 'url' => ['/penalty-top-ten']];
                 $menuItems[] = ['label' => 'Penalty Points', 'url' => ['/penalty-points/points']];
                 $menuItems[] = ['label' => 'Penalty Status', 'url' => ['/penalty-points']];
                 $menuItems[] = '<li>'

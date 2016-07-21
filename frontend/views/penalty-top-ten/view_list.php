@@ -58,6 +58,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'timeout' => false,
         'enablePushState' => false,
         'clientOptions' => ['method' => 'POST']]);
+    
     ?>
 
     <?=
@@ -151,7 +152,7 @@ $this->params['breadcrumbs'][] = $this->title;
             ['class' => 'frontend\models\CustomActionColumn'],
         ],
     ]);
-    $this->registerJsFile("js/bootstrap.min.js", ['position' => \yii\web\View::POS_END]);
+    //$this->registerJsFile("js/bootstrap.min.js", ['position' => \yii\web\View::POS_END]);
     ?>
     <?php Pjax::end(); ?></div>
 
