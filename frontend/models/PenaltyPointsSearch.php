@@ -59,38 +59,141 @@ class PenaltyPointsSearch extends PenaltyPoints {
      *
      * @return ActiveDataProvider
      */
-    public function search($params) {
-        ini_set('max_execution_time', 86400);
-        ini_set("memory_limit", "-1");
-        error_reporting(E_ALL);
-        ini_set("display_errors", 1);
-        $mySearchParams = [];
-        if (!empty($params['PenaltyPointsSearch'])) {
-            $mySearchParams = $params['PenaltyPointsSearch'];
-            $mySearchParams = array_filter($mySearchParams);
-        }
-
+    public function search($params, $host_name = '') {
+//        ini_set('max_execution_time', 86400);
+//        ini_set("memory_limit", "-1");
+//        error_reporting(E_ALL);
+//        ini_set("display_errors", 1);
+//        $mySearchParams = [];
+//        if (!empty($params['PenaltyPointsSearch'])) {
+//            $mySearchParams = $params['PenaltyPointsSearch'];
+//            $mySearchParams = array_filter($mySearchParams);
+//        }
+//
+//        $connection = new \MongoClient(Yii::$app->mongodb->dsn);
+//        $database   = $connection->deepdive;
+//        $collection = $database->week_penalty_master;
+//        //$collection = Yii::$app->commonUtility->mongoDbConnection('deepdive', 'weekdayPenalty');
+//        $cursors = $collection->find($mySearchParams);
+//
+//        $penaltyPoints = array();
+//        foreach ($cursors as $cursor) {
+//            unset($cursor['_id']);
+//
+//            $penaltyPoints[] = $cursor;
+//        }
+//
+//        // add conditions that should always apply here
+//        $penaltyPointsProvider = new ArrayDataProvider([
+//            'allModels' => $penaltyPoints,
+//            'pagination' => ['pageSize' => 20]
+//        ]);
+//
+//        $this->load($params);
+//        return $penaltyPointsProvider;
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
-        $collection = $database->week_penalty_master;
-        //$collection = Yii::$app->commonUtility->mongoDbConnection('deepdive', 'weekdayPenalty');
-        $cursors = $collection->find($mySearchParams);
-
-        $penaltyPoints = array();
-        foreach ($cursors as $cursor) {
-            unset($cursor['_id']);
-
-            $penaltyPoints[] = $cursor;
+        $collection = $database->week_master;
+        $tables = $collection->find(['status' => 0], ['table_name', 'date']);
+        $date = $table_name = '';
+        foreach ($tables as $table) {
+            $table_name = $table['table_name'];
+            $date = $table['date'];
+        }
+        $match = array();
+        if (!empty($_REQUEST['PenaltyPointsSearch'])) {
+            $modelData = $_REQUEST['PenaltyPointsSearch'];
+            if (!empty($modelData['hostname'])) {
+                $match['hostname'] = $modelData['hostname'];
+            }
+            if (!empty($modelData['loopback0'])) {
+                $match['loopback0'] = $modelData['loopback0'];
+            }
+            if (!empty($modelData['sapid'])) {
+                $match['sapid'] = $modelData['sapid'];
+            }
+            if (!empty($modelData['device_type'])) {
+                $match['device_type'] = $modelData['device_type'];
+            }
         }
 
-        // add conditions that should always apply here
+        if (!empty($host_name)) {
+            $match['hostname'] = $host_name;
+        }
+        $limitValue = 5000;
+        $offsetValue = 0;
+        $details = array();
+        for ($i = 0; $i < 1; $i++) {
+            $pipeline = array();
+            $data = array();
+            $collection = $database->$table_name;
+            $pipeline = array();
+            if (!empty($match)) {
+                $pipeline[]['$match'] = $match;
+            }
+            $pipeline[]['$sort'] = ['hostname' => 1];
+            $pipeline[]['$group'] = [
+                '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
+                'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
+                'bgp_available' => ['$sum' => '$bgp_available'],
+                'isis_available' => ['$sum' => '$isis_available'],
+                'resilent_status' => ['$sum' => '$resilent_status'],
+                'device_type' => ['$first' => '$device_type'],
+                'crc' => ['$sum' => '$crc'],
+                'input_errors' => ['$sum' => '$input_errors'],
+                'output_errors' => ['$sum' => '$output_errors'],
+                'interface_resets' => ['$sum' => '$interface_resets'],
+                'power' => ['$sum' => '$power'],
+                'optical_power' => ['$sum' => '$optical_power'],
+                'packetloss' => ['$sum' => '$packetloss'],
+                'audit_penalty' => ['$sum' => '$audit_penalty'],
+                'latency' => ['$sum' => '$latency'],
+                'module_temperature' => ['$sum' => '$module_temperature'],
+                'sapid' => ['$first' => '$sapid'],
+            ];
+
+            $pipeline[]['$limit'] = $limitValue;
+            $pipeline[]['$skip'] = $offsetValue;
+
+            $options = ['allowDiskUse' => true];
+            $data = $collection->aggregate($pipeline);
+            if (isset($data['result']) && !empty($data['result'])) {
+                foreach ($data['result'] as $dataDtl) {
+                    $host_name = $dataDtl['_id']['hostname'];
+                    $loopback0 = $dataDtl['_id']['loopback0'];
+                    unset($dataDtl['_id']);
+                    $dataDtl['hostname'] = $host_name;
+                    $dataDtl['loopback0'] = $loopback0;
+                    $dataDtl['total'] = (int) $dataDtl['ios_compliance_status'] + (int) $dataDtl['bgp_available'] + (int) $dataDtl['isis_available'] + (int) $dataDtl['resilent_status'] + (int) $dataDtl['crc'] + (int) $dataDtl['input_errors'] + (int) $dataDtl['output_errors'] + (int) $dataDtl['interface_resets'] + (int) $dataDtl['power'] + (int) $dataDtl['optical_power'] + (int) $dataDtl['module_temperature'] + (int) $dataDtl['packetloss'] + (int) $dataDtl['audit_penalty'] + (int) $dataDtl['latency'];
+                    $details[$host_name] = $dataDtl;
+                }
+            }
+            if (!empty($match)) {
+                break;
+            }
+
+            $offsetValue = $limitValue;
+            $limitValue = $limitValue + 5000;
+        }
+
+//        $recordWithSetPoints = self::setPoints($details);
         $penaltyPointsProvider = new ArrayDataProvider([
-            'allModels' => $penaltyPoints,
-            'pagination' => ['pageSize' => 5]
+            'allModels' => $details,
+            'pagination' => ['pageSize' => 20],
+            'sort' => ['attributes' => ['hostname', 'loopback0', 'ios_compliance_status', 'bgp_available', 'isis_available', 'isis_available', 'device_type', 'crc', 'input_errors', 'output_errors', 'interface_resets'
+                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status', 'sapid']],
+        ]);
+
+        $penaltyPointsExportProvider = new ArrayDataProvider([
+            'allModels' => $details,
+            'pagination' => ['pageSize' => 100000],
+            'sort' => ['attributes' => ['hostname', 'loopback0', 'ios_compliance_status', 'bgp_available', 'isis_available', 'isis_available', 'device_type', 'crc', 'input_errors', 'output_errors', 'interface_resets'
+                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status', 'sapid']],
         ]);
 
         $this->load($params);
-        return $penaltyPointsProvider;
+
+        return array('data' => $penaltyPointsProvider, 'date' => $date, 'details' => $details, 'export' => $penaltyPointsExportProvider);
     }
 
     /**
@@ -188,7 +291,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
         if (!empty($host_name)) {
             $match['hostname'] = $host_name;
         }
-        $limitValue = 100;
+        $limitValue = 1000;
         $offsetValue = 0;
         $details = array();
         for ($i = 0; $i < 1; $i++) {
@@ -248,7 +351,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
             }
 
             $offsetValue = $limitValue;
-            $limitValue = $limitValue + 100;
+            $limitValue = $limitValue + 1000;
         }
 
         $recordWithSetPoints = self::setPoints($details);
@@ -260,10 +363,18 @@ class PenaltyPointsSearch extends PenaltyPoints {
                     'isis_stability_changed', 'bfd_stability_changed', 'bgp_stability_changed', 'ldp_stability_changed', 'device_stability', 'pvb_priority_1',
                     'pvb_priority_2', 'pvb_priority_3']],
         ]);
+        $penaltyPointsProviderReport = new ArrayDataProvider([
+            'allModels' => $recordWithSetPoints,
+            'pagination' => ['pageSize' => 1000000],
+            'sort' => ['attributes' => ['hostname', 'loopback0', 'ios_compliance_status', 'bgp_available', 'isis_available', 'isis_available', 'device_type', 'crc', 'input_errors', 'output_errors', 'interface_resets'
+                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status', 'sapid',
+                    'isis_stability_changed', 'bfd_stability_changed', 'bgp_stability_changed', 'ldp_stability_changed', 'device_stability', 'pvb_priority_1',
+                    'pvb_priority_2', 'pvb_priority_3']],
+        ]);
 
         $this->load($params);
 
-        return array('data' => $penaltyPointsProvider, 'date' => $date, 'details' => $recordWithSetPoints);
+        return array('data' => $penaltyPointsProvider, 'date' => $date, 'details' => $recordWithSetPoints, 'penaltyPointsProviderExport' => $penaltyPointsProviderReport);
     }
 
     public function getGraph($circle = '') {

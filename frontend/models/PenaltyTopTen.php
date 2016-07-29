@@ -54,7 +54,7 @@ class PenaltyTopTen extends Model {
         return $circleMasterData;
     }
 
-    public function getCircleWiseData($circle = '', $fromDate = '', $toDate = '', $params = []) {
+    public function getCircleWiseData($circle = '', $fromDate = '', $toDate = '', $params = [], $report = false) {
         $sql = "select site_sap_id FROM tbl_site_master as t INNER JOIN tbl_circle_master as tu ON(t.circle_id=tu.id) "
                 . "WHERE tu.circle_name='$circle' AND LENGTH(site_sap_id)<20 AND LENGTH(site_sap_id)>15";
         $results = Yii::$app->db_rjil->createCommand($sql)->queryAll();
@@ -64,14 +64,23 @@ class PenaltyTopTen extends Model {
                 $sapids[] = $value['site_sap_id'];
             }
         }
-        
-        if (!empty($sapids)) {
-            $data = $this->getPenaltyData($sapids, $fromDate, $toDate);
-            //$penaltyPointsProvider = new ArrayDataProvider(['allModels' => $data]);
 
-            $penaltyPointsProvider = new ArrayDataProvider([
+        if (!empty($sapids)) {
+            $data = $this->groupPenaltyData("week_penalty_master", $fromDate, $toDate, $sapids, '', $report);
+            //$data = $this->getPenaltyData($sapids, $fromDate, $toDate);
+            //$penaltyPointsProvider = new ArrayDataProvider(['allModels' => $data]);
+            $penaltyPointsProvider[] = new ArrayDataProvider([
                 'allModels' => $data,
-                'pagination' => ['pageSize' => 0],
+                'pagination' => ['pageSize' => 20],
+                'sort' => [
+                    'attributes' => ['total'],
+                    'defaultOrder' => [
+                        'total' => SORT_DESC,
+                    ]]
+            ]);
+            $penaltyPointsProvider[] = new ArrayDataProvider([
+                'allModels' => $data,
+                'pagination' => ['pageSize' => 100000],
                 'sort' => [
                     'attributes' => ['total'],
                     'defaultOrder' => [
@@ -79,11 +88,44 @@ class PenaltyTopTen extends Model {
                     ]]
             ]);
             $this->load($params);
-            
+
+            if (!$report)
+                $penaltyPointsProvider = $penaltyPointsProvider[0];
+
             return $penaltyPointsProvider;
         } else {
             return array();
         }
+    }
+
+    public function getDeviceWiseData($deviceType, $fromDate, $toDate, $params = [], $report = false) {
+        $data = $this->getDeviceTypeWiseData($deviceType, $fromDate, $toDate, $params, $report);
+
+        $penaltyPointsProvider[] = new ArrayDataProvider([
+            'allModels' => $data,
+            'pagination' => ['pageSize' => 20],
+            'sort' => [
+                'attributes' => ['total'],
+                'defaultOrder' => [
+                    'total' => SORT_DESC,
+                ]]
+        ]);
+
+        $penaltyPointsProvider[] = new ArrayDataProvider([
+            'allModels' => $data,
+            'pagination' => ['pageSize' => 100000],
+            'sort' => [
+                'attributes' => ['total'],
+                'defaultOrder' => [
+                    'total' => SORT_DESC,
+                ]]
+        ]);
+        $this->load($params);
+
+        if (!$report)
+            $penaltyPointsProvider = $penaltyPointsProvider[0];
+
+        return $penaltyPointsProvider;
     }
 
     public function getPenaltyData($sapids = [], $fromDate = '', $toDate = '') {
@@ -98,7 +140,7 @@ class PenaltyTopTen extends Model {
         return $weekData;
     }
 
-    public function groupPenaltyData($table_name = '', $fromDate = '', $toDate = '', $sapids = [], $request_hostname = '') {
+    public function groupPenaltyData($table_name = '', $fromDate = '', $toDate = '', $sapids = [], $request_hostname = '', $report = false) {
         $penltySearch = new PenaltyPointsSearch;
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
@@ -144,7 +186,7 @@ class PenaltyTopTen extends Model {
         $options = ['allowDiskUse' => true];
         $data = $collection->aggregate($pipeline);
         if (isset($data['result']) && !empty($data['result'])) {
-            $details = $penltySearch->setPoints($data['result']);
+            $details = (!$report) ? $penltySearch->setPoints($data['result']) : $data['result'];
             $total = [];
             $data = [];
             if (!empty($details)) {
@@ -168,23 +210,27 @@ class PenaltyTopTen extends Model {
         $topTenDevices = [];
         if (!empty($data) && !empty($total)) {
             rsort($total);
-
-            $topTenPenalties = array_slice($total, 0, 10);
+            $topTenPenalties = (!$report) ? array_slice($total, 0, 10) : $total;
             if (!empty($data)) {
                 foreach ($data as $key => $dataDtl) {
                     if (in_array($dataDtl['total'], $topTenPenalties)) {
                         $topTenDevices[$key] = $dataDtl;
                     }
-                    if (count($topTenDevices) == 10) {
-                        break;
+                    if (!$report) {
+                        if (count($topTenDevices) == 10) {
+                            break;
+                        }
                     }
                 }
             }
+        } else {
+            Yii::$app->session->setFlash('error', 'No Data Found!');
         }
         return $topTenDevices;
     }
 
-    public function getDeviceTypeWiseData($device_type = '', $fromDate = '', $toDate = '', $params = []) {
+    public function getDeviceTypeWiseData($device_type = '', $fromDate = '', $toDate = '', $params = [], $report = false) {
+        $device_type = ($device_type == 'PAR') ? 'AG1' : (($device_type == 'ESR') ? 'CSS' : '');
         $penltySearch = new PenaltyPointsSearch;
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
@@ -197,8 +243,8 @@ class PenaltyTopTen extends Model {
         if (!empty($fromDate) && !empty($toDate)) {
             $match['created_at'] = ['$gte' => $fromDate, '$lte' => $toDate];
         }
-        if (!empty($request_hostname)) {
-            $match['hostname'] = trim($request_hostname);
+        if (!empty($device_type)) {
+            $match['device_type'] = trim($device_type);
         }
         if (!empty($match))
             $pipeline[]['$match'] = $match;
@@ -227,7 +273,7 @@ class PenaltyTopTen extends Model {
         $options = ['allowDiskUse' => true];
         $data = $collection->aggregate($pipeline);
         if (isset($data['result']) && !empty($data['result'])) {
-            $details = $penltySearch->setPoints($data['result']);
+            $details = (!$report) ? $penltySearch->setPoints($data['result']) : $data['result'];
             $total = [];
             $data = [];
             if (!empty($details)) {
@@ -238,12 +284,7 @@ class PenaltyTopTen extends Model {
                     $dataDtl['hostname'] = $host_name;
                     $dataDtl['loopback0'] = $loopback0;
                     $dataDtl['total'] = $dataDtl['total'];
-                    if (!empty($request_hostname)) {
-                        $data[$host_name] = $dataDtl;
-                    } else {
-                        $data[$host_name . "&fromDate=" . $fromDate . "&todate=" . $toDate] = $dataDtl;
-                    }
-
+                    $data[$host_name . "&fromDate=" . $fromDate . "&todate=" . $toDate] = $dataDtl;
                     $total[] = $dataDtl['total'];
                 }
             }
@@ -251,18 +292,21 @@ class PenaltyTopTen extends Model {
         $topTenDevices = [];
         if (!empty($data) && !empty($total)) {
             rsort($total);
-
-            $topTenPenalties = array_slice($total, 0, 10);
+            $topTenPenalties = (!$report) ? array_slice($total, 0, 10) : $total;
             if (!empty($data)) {
                 foreach ($data as $key => $dataDtl) {
                     if (in_array($dataDtl['total'], $topTenPenalties)) {
                         $topTenDevices[$key] = $dataDtl;
                     }
-                    if (count($topTenDevices) == 10) {
-                        break;
+                    if (!$report) {
+                        if (count($topTenDevices) == 10) {
+                            break;
+                        }
                     }
                 }
             }
+        } else {
+            Yii::$app->session->setFlash('error', 'No Data Found!');
         }
         return $topTenDevices;
     }

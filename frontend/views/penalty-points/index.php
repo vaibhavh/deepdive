@@ -3,10 +3,10 @@
 use yii\helpers\Html;
 use yii\widgets\Pjax;
 use app\controllers\SiteController;
+use kartik\export\ExportMenu;
 use kartik\grid\GridView;
 use yii\bootstrap\Modal;
 use frontend\models\CustomActionColumn;
-use kartik\export\ExportMenu;
 
 //use yii\grid\GridView;
 
@@ -59,7 +59,7 @@ Modal::end();
         <?php // echo $this->render('_search', ['model' => $searchModel]);    ?>
 
 
-    <?php // Pjax::begin(['id' => 'grid', 'timeout' => false, 'clientOptions' => ['method' => 'POST']]); ?> 
+    <?php // Pjax::begin(['id' => 'grid', 'timeout' => false, 'clientOptions' => ['method' => 'POST']]);  ?> 
     <?php
     \yii\widgets\Pjax::begin(['id' => 'penlaty',
         'timeout' => false,
@@ -75,7 +75,6 @@ Modal::end();
             'value' => "device_type",
             'attribute' => "device_type"
         ],
-//            'device_type',
         [
             'filter' => false,
             'value' => "ios_compliance_status",
@@ -175,11 +174,15 @@ Modal::end();
         'total',
         ['class' => 'frontend\models\CustomActionColumn'],
     ];
-    echo ExportMenu::widget([
-        'dataProvider' => $dataProvider,
-        'columns' => $gridColumns
-    ]);
     ?>
+
+    <div style="padding-top: 50px;padding-left: 10px;position: absolute;"> <?=
+    ExportMenu::widget([
+        'dataProvider' => $export,
+        'filterModel' => $searchModel,
+        'columns' => $gridColumns,
+    ]);
+    ?></div>
 
     <?=
     GridView::widget([
@@ -193,10 +196,15 @@ Modal::end();
         'striped' => false,
         'condensed' => false,
         'responsive' => true,
+        'hover' => true,
 //        'floatHeader' => true,
 //        'floatHeaderOptions' => ['scrollingTop' => 1],
         'panel' => [
             'type' => GridView::TYPE_PRIMARY
+        ],
+        'toolbar' => [
+            //'{export}',
+            '{toggleData}',
         ],
         'beforeHeader' => [
             [
