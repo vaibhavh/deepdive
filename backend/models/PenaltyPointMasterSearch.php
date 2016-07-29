@@ -11,13 +11,12 @@ use yii\data\ArrayDataProvider;
 /**
  * PenaltyPointMasterSearch represents the model behind the search form about `app\models\PenaltyPointMaster`.
  */
-class PenaltyPointMasterSearch extends PenaltyPointMaster
-{
+class PenaltyPointMasterSearch extends PenaltyPointMaster {
+
     /**
      * @inheritdoc
      */
-    public function rules()
-    {
+    public function rules() {
         return [
             [['id', 'points', 'created_by', 'modified_by', 'is_deleted', 'is_active'], 'integer'],
             [['section', 'device_type', 'subsection', 'rule', 'frequency', 'created_at', 'modified_at'], 'safe'],
@@ -27,8 +26,7 @@ class PenaltyPointMasterSearch extends PenaltyPointMaster
     /**
      * @inheritdoc
      */
-    public function scenarios()
-    {
+    public function scenarios() {
         // bypass scenarios() implementation in the parent class
         return Model::scenarios();
     }
@@ -40,17 +38,15 @@ class PenaltyPointMasterSearch extends PenaltyPointMaster
      *
      * @return ActiveDataProvider
      */
-    public function search($params)
-    {
+    public function search($params) {
         $mySearchParams = [];
-        if(!empty($params['PenaltyPointMasterSearch']))
-        {
+        if (!empty($params['PenaltyPointMasterSearch'])) {
             $mySearchParams = $params['PenaltyPointMasterSearch'];
             $mySearchParams = array_filter($mySearchParams);
         }
         $mySearchParams['is_deleted'] = '0';
         $mySearchParams['is_active'] = '1';
-        
+
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
         $collection = $database->penaltyPointMaster;
@@ -58,15 +54,16 @@ class PenaltyPointMasterSearch extends PenaltyPointMaster
         $penaltyPointMaster = array();
         foreach ($results as $key => $result) {
             $penaltyPointMaster[$key] = $result;
-        }    
+        }
 
         // add conditions that should always apply here
         $dataProvider = new ArrayDataProvider([
             'allModels' => $penaltyPointMaster,
-            'pagination' => ['pageSize' => 5]
+            'pagination' => ['pageSize' => 50]
         ]);
 
         $this->load($params);
         return $dataProvider;
     }
+
 }

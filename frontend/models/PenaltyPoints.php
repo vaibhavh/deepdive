@@ -73,7 +73,7 @@ class PenaltyPoints extends \yii\db\ActiveRecord {
             ['name' => 'Configuration Audit', 'y' => 0, 'drilldown' => 'Configuration Audit'],
             ['name' => 'Resiliency', 'y' => 0, 'drilldown' => 'Resiliency'],
             ['name' => 'IOS & SMU Compliance', 'y' => 0, 'drilldown' => 'IOS & SMU Compliance'],
-//            ['name' => 'Protocol Stability', 'y' => 0, 'drilldown' => 'Protocol Stability'],
+            ['name' => 'Protocol Stability', 'y' => 0, 'drilldown' => 'Protocol Stability'],
 //            ['name' => 'System Internals', 'y' => 0, 'drilldown' => 'System Internals'],
 //            ['name' => 'Network Resiliency Audit', 'y' => 0, 'drilldown' => 'Network Resiliency Audit'],
 //            ['name' => 'Quality of Service', 'y' => 0, 'drilldown' => 'Quality of Service']
@@ -117,7 +117,8 @@ class PenaltyPoints extends \yii\db\ActiveRecord {
                     ['SFP Module Temperature', 0],
                     ['Optical Power', 0],
                     ['Buffer Consumption', 0],
-                    ['Power Error', 0]
+                    ['Power Error', 0],
+                    ['Device Uptime', 0]
                 ]
             ],
 //        [
@@ -154,6 +155,9 @@ class PenaltyPoints extends \yii\db\ActiveRecord {
                 'id' => 'Configuration Audit',
                 'data' => [
                     ['Configuration Audit', 0],
+                    ['PvB Priority 1', 0],
+                    ['PvB Priority 2', 0],
+                    ['PvB Priority 3', 0],
 //                    ['Priority Ag2', 0],
 //                    ['Priority Ag3', 0],
 //                    ['Compare NIP & Show run', 0],
@@ -175,16 +179,17 @@ class PenaltyPoints extends \yii\db\ActiveRecord {
 //                    ['IOS & SMU', 0]
                 ]
             ],
-//             [
-//                'name' => 'Protocol Stability',
-//                'id' => 'Protocol Stability',
-//                'data' => [
-//                    ['ISIS stability', 0],
-//                    ['LDP', 0],
-//                    ['BGP', 0],
-//                    ['BFD', 0]
-//                ]
-//            ], [
+            [
+                'name' => 'Protocol Stability',
+                'id' => 'Protocol Stability',
+                'data' => [
+                    ['ISIS Stability', 0],
+                    ['BGP Stability', 0],
+                    ['BFD Stability', 0],
+                    ['LDP Stability', 0]
+                ]
+            ],
+                //[
 //                'name' => 'System Internals',
 //                'id' => 'System Internals',
 //                'data' => [
@@ -233,13 +238,13 @@ class PenaltyPoints extends \yii\db\ActiveRecord {
         return $drilldown;
     }
 
-    public static function getCircleForHostname($hostname)
-    {
+    public static function getCircleForHostname($hostname) {
         $db = Yii::$app->db_rjil;
         $sql = "SELECT `TCM`.`circle_name`, `TCM`.`circle_code`, `NHN`.`modified_sapid` FROM `ndd_host_name` as `NHN` INNER JOIN `tbl_circle_master` AS `TCM` ON(`TCM`.`circle_code` = SUBSTRING(`NHN`.`modified_sapid`,3,2)) WHERE `NHN`.`is_deleted` = 0 AND `NHN`.`host_name` = '" . $hostname . "'";
         $command = $db->createCommand($sql);
         $deviceData = $command->queryOne();
-        $circle = (!empty($deviceData['circle_name']))?$deviceData['circle_name']:'';
+        $circle = (!empty($deviceData['circle_name'])) ? $deviceData['circle_name'] : '';
         return $circle;
     }
+
 }

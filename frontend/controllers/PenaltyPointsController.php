@@ -66,13 +66,15 @@ class PenaltyPointsController extends Controller {
     public function actionGraph($id) {
         $pointsModel = new PenaltyPointsSearch();
         $data = $pointsModel->getData(Yii::$app->request->queryParams, $id);
-        $ipsla = $interface_resets = $resiliency = 0;
+        $ipsla = $interface_resets = $resiliency = $protocol_stability = $config_audit = 0;
         $sectionPointsData = $subSectionPointsData = $deviceDetails = array();
         if (!empty($id) && !empty($data['details'])) {
             $details = $data['details'][$id];
             $ipsla = $details['packetloss'] + $details['latency'];
-            $interface_resets = $details['crc'] + $details['input_errors'] + $details['output_errors'] + $details['interface_resets'] + $details['module_temperature'] + $details['optical_power'] + $details['power'];
+            $interface_resets = $details['crc'] + $details['input_errors'] + $details['output_errors'] + $details['interface_resets'] + $details['module_temperature'] + $details['optical_power'] + $details['power'] + $details['device_stability'];
             $resiliency = $details['bgp_available'] + $details['isis_available'] + $details['resilent_status'];
+            $protocol_stability = $details['isis_stability_changed'] + $details['bgp_stability_changed'] + $details['bfd_stability_changed'] + $details['ldp_stability_changed'];
+            $config_audit = $details['audit_penalty'] + $details['pvb_priority_1'] + $details['pvb_priority_2'] + $details['pvb_priority_3'];
             $subSectionPoints = array(
                 'IPSLA' => array(
                     'Packet Loss' => (isset($details['packetloss']) ? $details['packetloss'] : 0),
@@ -85,19 +87,28 @@ class PenaltyPointsController extends Controller {
                     'Interface Reset' => $details['interface_resets'],
                     'SFP Module Temperature' => $details['module_temperature'],
                     'Optical Power' => $details['optical_power'],
-                    'Power Error' => $details['power']),
+                    'Power Error' => $details['power'],
+                    'Device Uptime' => $details['device_stability']),
                 'Resiliency' => array(
                     '1 bgp available' => $details['bgp_available'],
                     '1 isis available' => $details['isis_available'],
                     'Repair path not available' => $details['resilent_status']),
                 'Configuration Audit' => array(
-                    'Configuration Audit' => $details['audit_penalty']),
+                    'Configuration Audit' => $details['audit_penalty'],
+                    'PvB Priority 1' => $details['pvb_priority_1'],
+                    'PvB Priority 2' => $details['pvb_priority_2'],
+                    'PvB Priority 3' => $details['pvb_priority_3']),
                 'IOS & SMU Compliance' => array(
-                    'IOS & SMU Compliance' => $details['ios_compliance_status'])
+                    'IOS & SMU Compliance' => $details['ios_compliance_status']),
+                'Protocol Stability' => array(
+                    'ISIS Stability' => $details['isis_stability_changed'],
+                    'BGP Stability' => $details['bgp_stability_changed'],
+                    'BFD Stability' => $details['bfd_stability_changed'],
+                    'LDP Stability' => $details['ldp_stability_changed']),
             );
-            $deviceCircle  = PenaltyPoints::getCircleForHostname($id);
+            $deviceCircle = PenaltyPoints::getCircleForHostname($id);
             $deviceDetails = ['hostname' => $details['hostname'], 'loopback0' => $details['loopback0'], 'date' => $data['date'], 'circle' => $deviceCircle];
-            $sectionPoints = array('IPSLA' => $ipsla, 'Interface Errors' => $interface_resets, 'Resiliency' => $resiliency, 'Configuration Audit' => $details['audit_penalty'], 'IOS & SMU Compliance' => $details['ios_compliance_status']);
+            $sectionPoints = array('IPSLA' => $ipsla, 'Interface Errors' => $interface_resets, 'Resiliency' => $resiliency, 'Configuration Audit' => $config_audit, 'IOS & SMU Compliance' => $details['ios_compliance_status'], 'Protocol Stability' => $protocol_stability);
             $sectionPointsData = PenaltyPoints::getSectionData($sectionPoints);
             $subSectionPointsData = PenaltyPoints::getSubSectionDrilldownData($subSectionPoints);
         }
@@ -192,6 +203,10 @@ class PenaltyPointsController extends Controller {
         die;
         $model = new PenaltyPointsSearch();
         $model->getGraph();
+    }
+
+    public function downloadData() {
+        
     }
 
 }

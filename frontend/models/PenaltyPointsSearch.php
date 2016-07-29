@@ -147,50 +147,10 @@ class PenaltyPointsSearch extends PenaltyPoints {
         $total = 0;
         foreach ($penaltyPoints as $key => $record) {
             $record['total'] = 0;
-            if (isset($penaltyPointMaster[$record['device_type']]['ios_compliance_status']) && $record['ios_compliance_status'] > 0) {
-                $record['total'] += $record['ios_compliance_status'] = (int) $record['ios_compliance_status'] * (int) $penaltyPointMaster[$record['device_type']]['ios_compliance_status'];
-            }
-
-            if (isset($penaltyPointMaster[$record['device_type']]['bgp_available']) && $record['bgp_available'] > 0) {
-                $record['total'] +=$record['bgp_available'] = (int) $record['bgp_available'] * (int) $penaltyPointMaster[$record['device_type']]['bgp_available'];
-            }
-
-            if (isset($penaltyPointMaster[$record['device_type']]['isis_available']) && $record['isis_available'] > 0) {
-                $record['total'] +=$record['isis_available'] = (int) $record['isis_available'] * (int) $penaltyPointMaster[$record['device_type']]['isis_available'];
-            }
-
-            if (isset($penaltyPointMaster[$record['device_type']]['resilent_status']) && $record['resilent_status'] > 0) {
-                $record['total'] +=$record['resilent_status'] = (int) $record['resilent_status'] * (int) $penaltyPointMaster[$record['device_type']]['resilent_status'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['crc']) && $record['crc'] > 0) {
-                $record['total'] +=$record['crc'] = (int) $record['crc'] * (int) $penaltyPointMaster[$record['device_type']]['crc'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['input_errors']) && $record['input_errors'] > 0) {
-                $record['total'] += $record['input_errors'] = (int) $record['input_errors'] * (int) $penaltyPointMaster[$record['device_type']]['input_errors'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['output_errors']) && $record['output_errors'] > 0) {
-                $record['output_errors'] = (int) $record['output_errors'] * (int) $penaltyPointMaster[$record['device_type']]['output_errors'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['interface_resets']) && $record['interface_resets'] > 0) {
-                $record['total'] +=$record['interface_resets'] = (int) $record['interface_resets'] * (int) $penaltyPointMaster[$record['device_type']]['interface_resets'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['power']) && $record['power'] > 0) {
-                $record['total'] +=$record['power'] = (int) $record['power'] * (int) $penaltyPointMaster[$record['device_type']]['power'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['optical_power']) && $record['optical_power'] > 0) {
-                $record['total'] +=$record['optical_power'] = (int) $record['optical_power'] * (int) $penaltyPointMaster[$record['device_type']]['optical_power'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['module_temperature']) && $record['module_temperature'] > 0) {
-                $record['total'] +=$record['module_temperature'] = (int) $record['module_temperature'] * (int) $penaltyPointMaster[$record['device_type']]['module_temperature'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['packetloss']) && $record['packetloss'] > 0) {
-                $record['total'] +=$record['packetloss'] = (int) $record['packetloss'] * (int) $penaltyPointMaster[$record['device_type']]['packetloss'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['audit_penalty']) && $record['audit_penalty'] > 0) {
-                $record['total'] +=$record['audit_penalty'] = (int) $record['audit_penalty'] * (int) $penaltyPointMaster[$record['device_type']]['audit_penalty'];
-            }
-            if (isset($penaltyPointMaster[$record['device_type']]['latency']) && $record['latency'] > 0) {
-                $record['total'] +=$record['latency'] = (int) $record['latency'] * (int) $penaltyPointMaster[$record['device_type']]['latency'];
+            foreach ($record as $key1 => $recordValue) {
+                if (isset($penaltyPointMaster[$record['device_type']][$key1]) && $recordValue > 0) {
+                    $record['total'] += $record[$key1] = (int) $recordValue * (int) $penaltyPointMaster[$record['device_type']][$key1];
+                }
             }
             $penaltyResultArr[$key] = $record;
         }
@@ -198,7 +158,10 @@ class PenaltyPointsSearch extends PenaltyPoints {
     }
 
     public function getData($params, $host_name = '') {
-
+        ini_set('max_execution_time', 86400);
+        ini_set("memory_limit", "-1");
+        //error_reporting(E_ALL);
+        //ini_set("display_errors",1);
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
         $collection = $database->week_master;
@@ -225,7 +188,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
         if (!empty($host_name)) {
             $match['hostname'] = $host_name;
         }
-        $limitValue = 5000;
+        $limitValue = 100;
         $offsetValue = 0;
         $details = array();
         for ($i = 0; $i < 1; $i++) {
@@ -236,7 +199,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
             if (!empty($match)) {
                 $pipeline[]['$match'] = $match;
             }
-            $pipeline[]['$sort'] = ['hostname' => 1];
+            //$pipeline[]['$sort'] = ['hostname'=>-1];
             $pipeline[]['$group'] = [
                 '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
                 'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
@@ -255,6 +218,14 @@ class PenaltyPointsSearch extends PenaltyPoints {
                 'latency' => ['$sum' => '$latency'],
                 'module_temperature' => ['$sum' => '$module_temperature'],
                 'sapid' => ['$first' => '$sapid'],
+                'isis_stability_changed' => ['$sum' => '$isis_stability_changed'],
+                'ldp_stability_changed' => ['$sum' => '$ldp_stability_changed'],
+                'bfd_stability_changed' => ['$sum' => '$bfd_stability_changed'],
+                'bgp_stability_changed' => ['$sum' => '$bgp_stability_changed'],
+                'device_stability' => ['$sum' => '$device_stability'],
+                'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
+                'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
+                'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
             ];
 
             $pipeline[]['$limit'] = $limitValue;
@@ -277,7 +248,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
             }
 
             $offsetValue = $limitValue;
-            $limitValue = $limitValue + 5000;
+            $limitValue = $limitValue + 100;
         }
 
         $recordWithSetPoints = self::setPoints($details);
@@ -285,9 +256,11 @@ class PenaltyPointsSearch extends PenaltyPoints {
             'allModels' => $recordWithSetPoints,
             'pagination' => ['pageSize' => 20],
             'sort' => ['attributes' => ['hostname', 'loopback0', 'ios_compliance_status', 'bgp_available', 'isis_available', 'isis_available', 'device_type', 'crc', 'input_errors', 'output_errors', 'interface_resets'
-                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status', 'sapid']],
+                    , 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'total', 'resilent_status', 'sapid',
+                    'isis_stability_changed', 'bfd_stability_changed', 'bgp_stability_changed', 'ldp_stability_changed', 'device_stability', 'pvb_priority_1',
+                    'pvb_priority_2', 'pvb_priority_3']],
         ]);
-        
+
         $this->load($params);
 
         return array('data' => $penaltyPointsProvider, 'date' => $date, 'details' => $recordWithSetPoints);
