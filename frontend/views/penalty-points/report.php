@@ -5,14 +5,13 @@ use yii\bootstrap\Modal;
 use frontend\models\CustomActionColumn;
 use dosamigos\datepicker\DatePicker;
 use yii\widgets\ActiveForm;
+use kartik\export\ExportMenu;
 
 /* @var $this yii\web\View */
 /* @var $searchModel app\models\PenaltyPointsSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-
-
-$this->title = 'Penalty Top Ten';
+$this->title = 'Penalty Reports';
 $this->params['breadcrumbs'][] = $this->title;
 
 if(Yii::$app->session->hasFlash('error'))
@@ -42,17 +41,17 @@ if(Yii::$app->session->hasFlash('success'))
 </style>
 <?php
 Modal::begin([
-    'header' => '<h2>Top Ten Penalty Points</h2>',
+    'header' => '<h2>Penalty Report</h2>',
     'id' => 'model',
     'size' => 'model-lg',
 ]);
 echo '<div id="modelContent" align="center"><img src="/deepdive/frontend/web/images/ajax-loader.gif"></div>';
 Modal::end();
 ?>
-<div class="penalty-points-index">
+<div class="penalty-points-report">
     <?php $form = ActiveForm::begin(); ?>
-    <input id="penaltytopten-circleval" class="form-control" name="PenaltyTopTen[circleval]" type="hidden" value="<?php if(!empty($_REQUEST['PenaltyTopTen']['circle']))  echo $_REQUEST['PenaltyTopTen']['circle']; else echo ''; ?>">
-    <input id="penaltytopten-deviceval" class="form-control" name="PenaltyTopTen[deviceval]" type="hidden" value="<?php if(!empty($_REQUEST['PenaltyTopTen']['device']))  echo $_REQUEST['PenaltyTopTen']['device']; else echo ''; ?>">
+    <input id="penaltypoints-circleval" class="form-control" name="PenaltyPoints[circleval]" type="hidden" value="<?php if(!empty($_REQUEST['PenaltyPoints']['circle']))  echo $_REQUEST['PenaltyPoints']['circle']; else echo ''; ?>">
+    <input id="penaltypoints-deviceval" class="form-control" name="PenaltyPoints[deviceval]" type="hidden" value="<?php if(!empty($_REQUEST['PenaltyPoints']['device']))  echo $_REQUEST['PenaltyPoints']['device']; else echo ''; ?>">
     <div><h1><?= Html::encode($this->title) ?></h1>           
         <?php
         echo '<div style="width:200px;float:left;valign:center;">' .
@@ -97,12 +96,13 @@ Modal::end();
             'date' => $date,
             'searchModel' => $pointsModel,
             'toDate' => $toDate,
+            'exportAll' => $exportAll,
         ]);
     }
     ?>
     <?php
-    $this->registerJsFile("js/topTenPenalty.js", ['position' => \yii\web\View::POS_END]);
-    $this->registerJsFile("js/bootstrap.min.js", ['position' => \yii\web\View::POS_END]);
+    $this->registerJsFile("/deepdive/frontend/web/js/penaltyPoints.js", ['position' => \yii\web\View::POS_END]);
+    $this->registerJsFile("/deepdive/frontend/web/js/bootstrap.min.js", ['position' => \yii\web\View::POS_END]);
 //    $this->registerJsFile("js/jquery-1.11.3.min.js", ['position' => \yii\web\View::POS_END]);
     ?>    
 </div>

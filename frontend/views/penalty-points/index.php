@@ -1,17 +1,12 @@
 <?php
 
 use yii\helpers\Html;
-//use yii\widgets\Pjax;
 use app\controllers\SiteController;
+use kartik\export\ExportMenu;
 use kartik\grid\GridView;
 use yii\bootstrap\Modal;
 use frontend\models\CustomActionColumn;
 
-//use yii\grid\GridView;
-
-/* @var $this yii\web\View */
-/* @var $searchModel app\models\PenaltyPointsSearch */
-/* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Penalty Points';
 $this->params['breadcrumbs'][] = $this->title;
@@ -57,59 +52,17 @@ Modal::end();
     ?><span style="color: #6666cc;"><h4><b><?= "Current Week [ From $fromDate till $toDate ]"; ?></b></h4></span> </h1>
         <?php // echo $this->render('_search', ['model' => $searchModel]);    ?>
 
-
-    <?php // Pjax::begin(['id' => 'grid', 'timeout' => false, 'clientOptions' => ['method' => 'POST']]); ?> 
-    <?php //\yii\widgets\Pjax::begin(['id' => 'penlaty',
-          //'timeout' => false,
-          //'enablePushState' => false,
-          //'clientOptions' => ['method' => 'POST']]);
-//    echo "<pre/>",print_r($searchModel);die;
-    ?>
-
-    <?=
-    GridView::widget([
-        'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,
-        'containerOptions' => ['style' => 'overflow: auto'],
-        'headerRowOptions' => ['class' => 'kartik-sheet-style'],
-        'filterRowOptions' => ['class' => 'kartik-sheet-style'],
-        'pjax' => true,
-        'bordered' => true,
-        'striped' => false,
-        'condensed' => false,
-        'responsive' => true,
-//        'floatHeader' => true,
-//        'floatHeaderOptions' => ['scrollingTop' => 1],
-        'panel' => [
-            'type' => GridView::TYPE_PRIMARY
-        ],
-        'beforeHeader' => [
-            [
-                'columns' => [
-                    ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
-                    ['content' => 'Device Details', 'options' => ['colspan' => 4, 'class' => 'text-center warning']],
-                    ['content' => 'IOS & SMU Compliance', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
-                    ['content' => 'Resiliency', 'options' => ['colspan' => 3, 'class' => 'text-center warning']],
-                    ['content' => 'Interface Errors', 'options' => ['colspan' => 7, 'class' => 'text-center warning']],
-                    ['content' => 'IPSLA', 'options' => ['colspan' => 2, 'class' => 'text-center warning']],
-                    ['content' => 'Configuration Audit', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
-                    ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
-                    ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
-                ],
-//                'options' => ['class' => 'skip-export'] // remove this row from export
-            ]
-        ],
-        'columns' => [
+    <?php 
+    $gridColumns = [
             ['class' => 'kartik\grid\SerialColumn'],
             'hostname',
             'loopback0',
             'sapid',
             [
-                'filter' => false,
+                'filter' => true,
                 'value' => "device_type",
                 'attribute' => "device_type"
             ],
-//            'device_type',
             [
                 'filter' => false,
                 'value' => "ios_compliance_status",
@@ -160,11 +113,60 @@ Modal::end();
             ],
             'total',
             ['class' => 'frontend\models\CustomActionColumn'],
+        ];
+    ?>
+
+    <div style="padding-top: 50px;padding-left: 10px;position: absolute;"> <?=
+    ExportMenu::widget([
+    'dataProvider' => $export,
+    'filterModel' => $searchModel,
+    'columns' => $gridColumns,
+]);
+    ?></div>
+
+    <?=
+    GridView::widget([
+        'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel,
+        'containerOptions' => ['style' => 'overflow: auto'],
+        'headerRowOptions' => ['class' => 'kartik-sheet-style'],
+        'filterRowOptions' => ['class' => 'kartik-sheet-style'],
+        'pjax' => true,
+        'bordered' => true,
+        'striped' => false,
+        'condensed' => false,
+        'responsive' => true,
+        'hover' => true,
+//        'floatHeader' => true,
+//        'floatHeaderOptions' => ['scrollingTop' => 1],
+        'panel' => [
+            'type' => GridView::TYPE_PRIMARY
         ],
+        'toolbar'=> [
+            //'{export}',
+            '{toggleData}',
+        ],
+        'beforeHeader' => [
+            [
+                'columns' => [
+                    ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
+                    ['content' => 'Device Details', 'options' => ['colspan' => 4, 'class' => 'text-center warning']],
+                    ['content' => 'IOS & SMU Compliance', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
+                    ['content' => 'Resiliency', 'options' => ['colspan' => 3, 'class' => 'text-center warning']],
+                    ['content' => 'Interface Errors', 'options' => ['colspan' => 7, 'class' => 'text-center warning']],
+                    ['content' => 'IPSLA', 'options' => ['colspan' => 2, 'class' => 'text-center warning']],
+                    ['content' => 'Configuration Audit', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
+                    ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
+                    ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
+                ],
+//                'options' => ['class' => 'skip-export'] // remove this row from export
+            ]
+        ],
+        'columns' => $gridColumns,
     ]);
     //$this->registerJsFile("js/bootstrap.min.js", ['position' => \yii\web\View::POS_END]);
     ?>
-    <?php //Pjax::end(); ?></div>
+</div>
 <style>
     .container{
         width: 100%;

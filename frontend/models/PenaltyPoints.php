@@ -21,6 +21,11 @@ use Yii;
  */
 class PenaltyPoints extends \yii\db\ActiveRecord {
 
+    public $fromDate;
+    public $toDate;
+    public $circle;
+    public $device;
+    public $scenario;
     /**
      * @inheritdoc
      */
@@ -35,7 +40,7 @@ class PenaltyPoints extends \yii\db\ActiveRecord {
         return [
             [['hostname', 'loopback0', 'device_type', 'ios_compliance_status', 'ios_current_version', 'ios_built_version', 'bgp_available', 'isis_available', 'resilent_status', 'created_date'], 'required'],
             [['ios_compliance_status', 'bgp_available', 'isis_available', 'resilent_status'], 'integer'],
-            [['created_date'], 'safe'],
+            [['created_date','fromDate','toDate','circle','device','scenario'], 'safe'],
             [['hostname', 'loopback0'], 'string', 'max' => 20],
             [['device_type'], 'string', 'max' => 10],
             [['ios_current_version', 'ios_built_version'], 'string', 'max' => 50],

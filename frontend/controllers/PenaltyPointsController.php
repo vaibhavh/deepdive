@@ -3,11 +3,17 @@
 namespace frontend\controllers;
 
 use Yii;
+use frontend\models\PenaltyTopTen;
+use frontend\models\PenaltyTopTenSearch;
 use frontend\models\PenaltyPoints;
 use frontend\models\PenaltyPointsSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\bootstrap\Modal;
+use app\models\Model;
+//use yii\components\CHelper;
+use \CHelper;
 
 /**
  * PenaltyPointsController implements the CRUD actions for PenaltyPoints model.
@@ -33,12 +39,56 @@ class PenaltyPointsController extends Controller {
      * @return mixed
      */
     public function actionIndex() {
+        error_reporting(E_ALL);
+        ini_set("display_errors", 1);
         $searchModel = new PenaltyPointsSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
-                    'dataProvider' => $dataProvider,
+                    'dataProvider' => $dataProvider['data'],
+                    'date' => $dataProvider['date'],
                     'searchModel' => $searchModel,
+                    'export' => $dataProvider['export'],
+        ]);
+    }
+    
+    public function actionReports() {
+        $model = new PenaltyPoints();
+        $topTenModel = new PenaltyTopTen();
+        $pointsModel = new PenaltyPointsSearch();
+        $circle = '';
+        $result = '';
+        $circleData = [];
+        $fromDate = $toDate = '';
+        if ($model->load(Yii::$app->request->post())) {
+            $data = Yii::$app->request->post();
+            if (!empty($data['PenaltyPoints'])) {
+                $data = $data['PenaltyPoints'];
+                $fromDate = $this->getFormatedDate($data['fromDate']);
+                $toDate = $this->getFormatedDate($data['toDate']);
+                $circle = $data['circle'];
+                $deviceType = $data['device'];
+                if (!empty($data['circle'])) {
+                    $result = $topTenModel->getCircleWiseData($circle, $fromDate, $toDate, Yii::$app->request->queryParams, true);
+                    $gridData = $result[0];
+                    $exportAll = $result[1];
+                } else if (!empty($data['device'])) {
+                    $result = $topTenModel->getDeviceWiseData($deviceType, $fromDate, $toDate, Yii::$app->request->queryParams, true);
+                    $gridData = $result[0];
+                    $exportAll = $result[1];
+                }
+            }
+        }
+        $circleMasterData = $topTenModel->getCircleData();
+        
+        return $this->render('report', [
+                    'model' => $model,
+                    'pointsModel' => $model,
+                    'circleMasterData' => $circleMasterData,
+                    'dataProvider' => $gridData,
+                    'date' => $fromDate,
+                    'toDate' => $toDate,
+                    'exportAll' => $exportAll,
         ]);
     }
 
@@ -192,6 +242,13 @@ class PenaltyPointsController extends Controller {
         die;
         $model = new PenaltyPointsSearch();
         $model->getGraph();
+    }
+    
+    public function getFormatedDate($date = '') {
+        $date = str_replace(':', "-", $date);
+        $date = new \DateTime($date);
+        $date = $date->format('Y-m-d');
+        return $date;
     }
 
 }
