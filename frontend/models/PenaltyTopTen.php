@@ -66,7 +66,7 @@ class PenaltyTopTen extends Model {
         }
 
         if (!empty($sapids)) {
-            $data = $this->groupPenaltyData("week_penalty_master", $fromDate, $toDate, $sapids, '',$report);
+            $data = $this->groupPenaltyData("week_penalty_master", $fromDate, $toDate, $sapids, '', $report);
             //$data = $this->getPenaltyData($sapids, $fromDate, $toDate);
             //$penaltyPointsProvider = new ArrayDataProvider(['allModels' => $data]);
             $penaltyPointsProvider[] = new ArrayDataProvider([
@@ -88,10 +88,10 @@ class PenaltyTopTen extends Model {
                     ]]
             ]);
             $this->load($params);
-            
-            if(!$report)
+
+            if (!$report)
                 $penaltyPointsProvider = $penaltyPointsProvider[0];
-                    
+
             return $penaltyPointsProvider;
         } else {
             return array();
@@ -110,7 +110,7 @@ class PenaltyTopTen extends Model {
                     'total' => SORT_DESC,
                 ]]
         ]);
-        
+
         $penaltyPointsProvider[] = new ArrayDataProvider([
             'allModels' => $data,
             'pagination' => ['pageSize' => 100000],
@@ -122,9 +122,9 @@ class PenaltyTopTen extends Model {
         ]);
         $this->load($params);
 
-        if(!$report)
+        if (!$report)
             $penaltyPointsProvider = $penaltyPointsProvider[0];
-        
+
         return $penaltyPointsProvider;
     }
 
@@ -186,7 +186,7 @@ class PenaltyTopTen extends Model {
         $options = ['allowDiskUse' => true];
         $data = $collection->aggregate($pipeline);
         if (isset($data['result']) && !empty($data['result'])) {
-            $details = (!$report)?$penltySearch->setPoints($data['result']):$data['result'];
+            $details = (!$report) ? $penltySearch->setPoints($data['result']) : $data['result'];
             $total = [];
             $data = [];
             if (!empty($details)) {
@@ -210,7 +210,7 @@ class PenaltyTopTen extends Model {
         $topTenDevices = [];
         if (!empty($data) && !empty($total)) {
             rsort($total);
-            $topTenPenalties = (!$report)?array_slice($total, 0, 10):$total;
+            $topTenPenalties = (!$report) ? array_slice($total, 0, 10) : $total;
             if (!empty($data)) {
                 foreach ($data as $key => $dataDtl) {
                     if (in_array($dataDtl['total'], $topTenPenalties)) {
@@ -230,7 +230,7 @@ class PenaltyTopTen extends Model {
     }
 
     public function getDeviceTypeWiseData($device_type = '', $fromDate = '', $toDate = '', $params = [], $report = false) {
-        $device_type = ($device_type == 'PAR')?'AG1':(($device_type == 'ESR')?'CSS':'');
+        $device_type = ($device_type == 'PAR') ? 'AG1' : (($device_type == 'ESR') ? 'CSS' : '');
         $penltySearch = new PenaltyPointsSearch;
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
@@ -273,7 +273,7 @@ class PenaltyTopTen extends Model {
         $options = ['allowDiskUse' => true];
         $data = $collection->aggregate($pipeline);
         if (isset($data['result']) && !empty($data['result'])) {
-            $details = (!$report)?$penltySearch->setPoints($data['result']):$data['result'];
+            $details = (!$report) ? $penltySearch->setPoints($data['result']) : $data['result'];
             $total = [];
             $data = [];
             if (!empty($details)) {
@@ -292,7 +292,7 @@ class PenaltyTopTen extends Model {
         $topTenDevices = [];
         if (!empty($data) && !empty($total)) {
             rsort($total);
-            $topTenPenalties = (!$report)?array_slice($total, 0, 10):$total;
+            $topTenPenalties = (!$report) ? array_slice($total, 0, 10) : $total;
             if (!empty($data)) {
                 foreach ($data as $key => $dataDtl) {
                     if (in_array($dataDtl['total'], $topTenPenalties)) {
@@ -310,4 +310,5 @@ class PenaltyTopTen extends Model {
         }
         return $topTenDevices;
     }
+
 }

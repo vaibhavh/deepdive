@@ -13,12 +13,12 @@ use console\models\PenaltyJobs;
 
 class PenaltyJobsController extends Controller {
         public function actionDailyCollection() {
-            echo "cron service runnning \n";
+            echo "\n Cron service runnning - " . time() . "\n";
             PenaltyJobs::fetchDailyData();
         }
         
         public function actionWeeklyCollection() {
-            echo "cron service runnning \n";
+            echo "\n Cron service runnning - " . time() ."\n";
             PenaltyJobs::fetchWeeklyData();
         }
 }

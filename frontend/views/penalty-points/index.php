@@ -1,12 +1,18 @@
 <?php
 
 use yii\helpers\Html;
+use yii\widgets\Pjax;
 use app\controllers\SiteController;
 use kartik\export\ExportMenu;
 use kartik\grid\GridView;
 use yii\bootstrap\Modal;
 use frontend\models\CustomActionColumn;
 
+//use yii\grid\GridView;
+
+/* @var $this yii\web\View */
+/* @var $searchModel app\models\PenaltyPointsSearch */
+/* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Penalty Points';
 $this->params['breadcrumbs'][] = $this->title;
@@ -39,7 +45,7 @@ Modal::end();
 ?>
 <p>
     <?php
-    $date = date('d-m-Y');
+    $date = (empty($date)) ? date('d-m-Y') : $date;
     $fromDate = str_replace(':', "-", $date);
     $datetime = new DateTime($fromDate);
     $fromDate = $datetime->format('d-m-Y');
@@ -52,76 +58,130 @@ Modal::end();
     ?><span style="color: #6666cc;"><h4><b><?= "Current Week [ From $fromDate till $toDate ]"; ?></b></h4></span> </h1>
         <?php // echo $this->render('_search', ['model' => $searchModel]);    ?>
 
-    <?php 
+
+    <?php // Pjax::begin(['id' => 'grid', 'timeout' => false, 'clientOptions' => ['method' => 'POST']]);  ?> 
+    <?php
+    \yii\widgets\Pjax::begin(['id' => 'penlaty',
+        'timeout' => false,
+        'enablePushState' => false,
+        'clientOptions' => ['method' => 'POST']]);
     $gridColumns = [
-            ['class' => 'kartik\grid\SerialColumn'],
-            'hostname',
-            'loopback0',
-            'sapid',
-            [
-                'filter' => true,
-                'value' => "device_type",
-                'attribute' => "device_type"
-            ],
-            [
-                'filter' => false,
-                'value' => "ios_compliance_status",
-                'attribute' => 'ios_compliance_status',
-            ],
-            [
-                'label' => '1 BGP Available',
-                'filter' => false,
-                'attribute' => 'bgp_available',
-                'value' => 'bgp_available'
-            ],
-            [
-                'label' => '1 ISIS Available',
-                'filter' => false,
-                'attribute' => 'isis_available',
-                'value' => 'isis_available'
-            ],
-            [
-                'label' => 'Repair Path Available',
-                'filter' => false,
-                'attribute' => 'resilent_status',
-                'value' => 'resilent_status'
-            ],
-	    [
-                'label' => 'CRC',
-                'filter' => false,
-                'attribute' => 'crc',
-                'value' => 'crc'
-            ],
-            'input_errors',
-            'output_errors',
-            'interface_resets',
-            'power',
-            'optical_power',
-            'module_temperature',
-	    [
-                'label' => 'Packet Loss',
-                'filter' => false,
-                'attribute' => 'packetloss',
-                'value' => 'packetloss'
-            ],
-            'latency',
-	    [
-                'label' => 'Security Compliance',
-                'filter' => false,
-                'attribute' => 'audit_penalty',
-                'value' => 'audit_penalty'
-            ],
-            'total',
-            ['class' => 'frontend\models\CustomActionColumn'],
-        ];
+        ['class' => 'kartik\grid\SerialColumn'],
+        'hostname',
+        'loopback0',
+        'sapid',
+        [
+            'filter' => true,
+            'value' => "device_type",
+            'attribute' => "device_type"
+        ],
+        [
+            'filter' => false,
+            'value' => "ios_compliance_status",
+            'attribute' => 'ios_compliance_status',
+        ],
+        [
+            'label' => '1 BGP Available',
+            'filter' => false,
+            'attribute' => 'bgp_available',
+            'value' => 'bgp_available'
+        ],
+        [
+            'label' => '1 ISIS Available',
+            'filter' => false,
+            'attribute' => 'isis_available',
+            'value' => 'isis_available'
+        ],
+        [
+            'label' => 'Repair Path Available',
+            'filter' => false,
+            'attribute' => 'resilent_status',
+            'value' => 'resilent_status'
+        ],
+        [
+            'label' => 'CRC',
+            'filter' => false,
+            'attribute' => 'crc',
+            'value' => 'crc'
+        ],
+        'input_errors',
+        'output_errors',
+        'interface_resets',
+        'power',
+        'optical_power',
+        'module_temperature',
+        [
+            'label' => 'Device Uptime',
+            'filter' => false,
+            'attribute' => 'device_stability',
+            'value' => 'device_stability'
+        ],
+        [
+            'label' => 'Packet Loss',
+            'filter' => false,
+            'attribute' => 'packetloss',
+            'value' => 'packetloss'
+        ],
+        'latency',
+        [
+            'label' => 'Security Compliance',
+            'filter' => false,
+            'attribute' => 'audit_penalty',
+            'value' => 'audit_penalty'
+        ],
+        [
+            'label' => 'PvB Priority 1',
+            'filter' => false,
+            'attribute' => 'pvb_priority_1',
+            'value' => 'pvb_priority_1'
+        ],
+        [
+            'label' => 'PvB Priority 2',
+            'filter' => false,
+            'attribute' => 'pvb_priority_2',
+            'value' => 'pvb_priority_2'
+        ],
+        [
+            'label' => 'PvB Priority 3',
+            'filter' => false,
+            'attribute' => 'pvb_priority_3',
+            'value' => 'pvb_priority_3'
+        ],
+        [
+            'label' => 'ISIS Stability',
+            'filter' => false,
+            'attribute' => 'isis_stability_changed',
+            'value' => 'isis_stability_changed'
+        ],
+        [
+            'label' => 'BGP Stability',
+            'filter' => false,
+            'attribute' => 'bgp_stability_changed',
+            'value' => 'bgp_stability_changed'
+        ],
+        [
+            'label' => 'Bfd Stability',
+            'filter' => false,
+            'attribute' => 'bfd_stability_changed',
+            'value' => 'bfd_stability_changed'
+        ],
+        [
+            'label' => 'LDP Stability',
+            'filter' => false,
+            'attribute' => 'ldp_stability_changed',
+            'value' => 'ldp_stability_changed'
+        ],
+        'total',
+        ['class' => 'frontend\models\CustomActionColumn'],
+    ];
     ?>
 
     <div style="padding-top: 50px;padding-left: 10px;position: absolute;"> <?=
     ExportMenu::widget([
-    'dataProvider' => $export,
-    'filterModel' => $searchModel,
-    'columns' => $gridColumns,
-]);
+        'dataProvider' => $export,
+        'filterModel' => $searchModel,
+        'columns' => $gridColumns,
+    ]);
     ?></div>
 
     <?=
@@ -142,7 +202,7 @@ Modal::end();
         'panel' => [
             'type' => GridView::TYPE_PRIMARY
         ],
-        'toolbar'=> [
+        'toolbar' => [
             //'{export}',
             '{toggleData}',
         ],
@@ -153,9 +213,10 @@ Modal::end();
                     ['content' => 'Device Details', 'options' => ['colspan' => 4, 'class' => 'text-center warning']],
                     ['content' => 'IOS & SMU Compliance', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
                     ['content' => 'Resiliency', 'options' => ['colspan' => 3, 'class' => 'text-center warning']],
-                    ['content' => 'Interface Errors', 'options' => ['colspan' => 7, 'class' => 'text-center warning']],
+                    ['content' => 'Interface Errors', 'options' => ['colspan' => 8, 'class' => 'text-center warning']],
                     ['content' => 'IPSLA', 'options' => ['colspan' => 2, 'class' => 'text-center warning']],
-                    ['content' => 'Configuration Audit', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
+                    ['content' => 'Configuration Audit', 'options' => ['colspan' => 4, 'class' => 'text-center warning']],
+                    ['content' => 'Protocol Stability', 'options' => ['colspan' => 4, 'class' => 'text-center warning']],
                     ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
                     ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
                 ],
@@ -164,9 +225,8 @@ Modal::end();
         ],
         'columns' => $gridColumns,
     ]);
-    //$this->registerJsFile("js/bootstrap.min.js", ['position' => \yii\web\View::POS_END]);
     ?>
-</div>
+    <?php Pjax::end(); ?></div>
 <style>
     .container{
         width: 100%;

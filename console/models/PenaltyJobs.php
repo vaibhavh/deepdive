@@ -81,6 +81,10 @@ class PenaltyJobs {
                             'ldp_stability_changed' => (int) $penelty_point['ldp_stability_changed'],
                             'bfd_stability_changed' => (int) $penelty_point['bfd_stability_changed'],
                             'bgp_stability_changed' => (int) $penelty_point['bgp_stability_changed'],
+                            'device_stability' => (int) $penelty_point['device_stability'],
+                            'pvb_priority_1' => (int) $penelty_point['pvb_priority1'],
+                            'pvb_priority_2' => (int) $penelty_point['pvb_priority2'],
+                            'pvb_priority_3' => (int) $penelty_point['pvb_priority3'],
                         ];
                         $data['crc'] = 0;
                         $data['input_errors'] = 0;
@@ -110,7 +114,6 @@ class PenaltyJobs {
                         if (isset($auditPoints[$penelty_point['loopback0']]))
                             $data['audit_penalty'] = (int) $auditPoints[$penelty_point['loopback0']];
                         $data['table_name'] = $table_name;
-                        //$data['created_date'] = date("Y-m-d");
                         $data['created_date'] = $created_date;
 
                         $collection->insert($data);
@@ -139,7 +142,7 @@ class PenaltyJobs {
         }
         $collection = $database->$table_name;
         $details = array();
-        $limitValue = 10;
+        $limitValue = 10000;
         $offsetValue = 0;
         for ($i = 0; $i < 10; $i++) {
             $pipeline = array();
@@ -165,14 +168,23 @@ class PenaltyJobs {
                         'latency' => ['$sum' => '$latency'],
                         'module_temperature' => ['$sum' => '$module_temperature'],
                         'sapid' => ['$first' => '$sapid'],
+                        'isis_stability_changed' => ['$sum' => '$isis_stability_changed'],
+                        'ldp_stability_changed' => ['$sum' => '$ldp_stability_changed'],
+                        'bfd_stability_changed' => ['$sum' => '$bfd_stability_changed'],
+                        'bgp_stability_changed' => ['$sum' => '$bgp_stability_changed'],
+                        'device_stability' => ['$sum' => '$device_stability'],
+                        'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
+                        'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
+                        'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
                     ],
                 ],
                 ['$limit' => $limitValue],
                 ['$skip' => $offsetValue],
             ];
+
+
             $options = ['allowDiskUse' => true];
             $data = $collection->aggregate($pipeline);
-
             if (isset($data['result']) && !empty($data['result'])) {
                 $details = array();
                 $collection = $database->week_penalty_master;
@@ -208,6 +220,14 @@ class PenaltyJobs {
                                 'packetloss' => (int) $value['packetloss'],
                                 'audit_penalty' => (int) $value['audit_penalty'],
                                 'latency' => (int) $value['latency'],
+                                'isis_stability_changed' => (int) $value['isis_stability_changed'],
+                                'ldp_stability_changed' => (int) $value['ldp_stability_changed'],
+                                'bfd_stability_changed' => (int) $value['bfd_stability_changed'],
+                                'bgp_stability_changed' => (int) $value['bgp_stability_changed'],
+                                'device_stability' => (int) $value['device_stability'],
+                                'pvb_priority_1' => (int) $value['pvb_priority_1'],
+                                'pvb_priority_2' => (int) $value['pvb_priority_2'],
+                                'pvb_priority_3' => (int) $value['pvb_priority_3'],
                                 'table_name' => $table_name,
                                 'sapid' => $value['sapid'],
                                 'created_at' => date('Y-m-d'),
@@ -224,7 +244,7 @@ class PenaltyJobs {
             }
 
             $offsetValue = $limitValue;
-            $limitValue = $limitValue + 30000;
+            $limitValue = $limitValue + 10000;
         }
 
 

@@ -12,13 +12,12 @@ use yii\filters\VerbFilter;
 /**
  * PenaltyPointMasterController implements the CRUD actions for PenaltyPointMaster model.
  */
-class PenaltyPointMasterController extends Controller
-{
+class PenaltyPointMasterController extends Controller {
+
     /**
      * @inheritdoc
      */
-    public function behaviors()
-    {
+    public function behaviors() {
         return [
             'verbs' => [
                 'class' => VerbFilter::className(),
@@ -33,14 +32,13 @@ class PenaltyPointMasterController extends Controller
      * Lists all PenaltyPointMaster models.
      * @return mixed
      */
-    public function actionIndex()
-    {
+    public function actionIndex() {
         $searchModel = new PenaltyPointMasterSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
+                    'searchModel' => $searchModel,
+                    'dataProvider' => $dataProvider,
         ]);
     }
 
@@ -49,10 +47,9 @@ class PenaltyPointMasterController extends Controller
      * @param integer $id
      * @return mixed
      */
-    public function actionView($id)
-    {
+    public function actionView($id) {
         return $this->render('view', [
-            'model' => $this->findMongoDbModel($id),
+                    'model' => $this->findMongoDbModel($id),
         ]);
     }
 
@@ -61,15 +58,14 @@ class PenaltyPointMasterController extends Controller
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
-    public function actionCreate()
-    {
+    public function actionCreate() {
         $model = new PenaltyPointMaster();
         $model->isNewRecord = true;
         if ($model->saveToMongoDb(Yii::$app->request->post())) {
             return $this->redirect(['index']);
         } else {
             return $this->render('create', [
-                'model' => $model,
+                        'model' => $model,
             ]);
         }
     }
@@ -80,15 +76,14 @@ class PenaltyPointMasterController extends Controller
      * @param integer $id
      * @return mixed
      */
-    public function actionUpdate($id)
-    {
+    public function actionUpdate($id) {
         $model = $this->findMongoDbModel($id);
         $model->isNewRecord = false;
         if ($model->updateToMongoDb($id, Yii::$app->request->post())) {
-            return $this->redirect(['view', 'id' => $model->id]);
+            return $this->redirect(['index']);
         } else {
             return $this->render('update', [
-                'model' => $model,
+                        'model' => $model,
             ]);
         }
     }
@@ -99,9 +94,8 @@ class PenaltyPointMasterController extends Controller
      * @param integer $id
      * @return mixed
      */
-    public function actionDelete($id)
-    {
-        if(PenaltyPointMaster::deleteFromMongoDb($id))
+    public function actionDelete($id) {
+        if (PenaltyPointMaster::deleteFromMongoDb($id))
             return $this->redirect(['index']);
     }
 
@@ -112,15 +106,14 @@ class PenaltyPointMasterController extends Controller
      * @return PenaltyPointMaster the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
-    protected function findModel($id)
-    {
+    protected function findModel($id) {
         if (($model = PenaltyPointMaster::findOne($id)) !== null) {
             return $model;
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
     }
-    
+
     /**
      * Finds the PenaltyPointMaster model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
@@ -128,12 +121,12 @@ class PenaltyPointMasterController extends Controller
      * @return PenaltyPointMaster the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
-    protected function findMongoDbModel($id)
-    {
+    protected function findMongoDbModel($id) {
         if (($model = PenaltyPointMaster::mongoDbFindOne($id)) !== null) {
             return $model;
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
     }
+
 }

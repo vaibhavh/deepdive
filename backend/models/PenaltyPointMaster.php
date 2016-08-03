@@ -71,8 +71,8 @@ class PenaltyPointMaster extends \yii\db\ActiveRecord
         if(!empty($data['PenaltyPointMaster']))
         {
             $myData = $data['PenaltyPointMaster'];
-            $myData['created_at'] = date("Y/m/d h:i:s a");
-            $myData['modified_at'] = date("Y/m/d h:i:s a");
+            $myData['created_at'] = date("Y/m/d h:i:s");
+            $myData['modified_at'] = date("Y/m/d h:i:s");
             $myData['created_by'] = Yii::$app->user->identity->id;
             $myData['modified_by'] = Yii::$app->user->identity->id;
             $myData['is_deleted'] = '0'; 
