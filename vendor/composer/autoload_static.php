@@ -28,6 +28,7 @@ class ComposerStaticInit45dc08a3a6b445a9c7e9b98cc5b5ad0d
         array (
             'kartik\\mpdf\\' => 12,
             'kartik\\grid\\' => 12,
+            'kartik\\export\\' => 14,
             'kartik\\dialog\\' => 14,
             'kartik\\base\\' => 12,
         ),
@@ -91,6 +92,10 @@ class ComposerStaticInit45dc08a3a6b445a9c7e9b98cc5b5ad0d
         array (
             0 => __DIR__ . '/..' . '/kartik-v/yii2-grid',
         ),
+        'kartik\\export\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/kartik-v/yii2-export',
+        ),
         'kartik\\dialog\\' => 
         array (
             0 => __DIR__ . '/..' . '/kartik-v/yii2-dialog',
@@ -118,6 +123,13 @@ class ComposerStaticInit45dc08a3a6b445a9c7e9b98cc5b5ad0d
     );
 
     public static $prefixesPsr0 = array (
+        'P' => 
+        array (
+            'PHPExcel' => 
+            array (
+                0 => __DIR__ . '/..' . '/phpoffice/phpexcel/Classes',
+            ),
+        ),
         'H' => 
         array (
             'HTMLPurifier' => 
