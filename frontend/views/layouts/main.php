@@ -54,6 +54,7 @@ AppAsset::register($this);
                 $menuItems[] = ['label' => 'Top Ten', 'url' => ['/penalty-top-ten']];
                 $menuItems[] = ['label' => 'Penalty Points', 'url' => ['/penalty-points/points']];
                 $menuItems[] = ['label' => 'Penalty Status', 'url' => ['/penalty-points']];
+                $menuItems[] = ['label' => 'Nexus Topology', 'url' => ['/nexus-interface-description']];
                 $menuItems[] = '<li>'
                         . Html::beginForm(['/site/logout'], 'post')
                         . Html::submitButton(
