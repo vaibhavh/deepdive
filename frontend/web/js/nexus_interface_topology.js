@@ -19,8 +19,8 @@ var topologyData1 = {
                 // initialize a topology
                 var topo = new nx.graphic.Topology({
                     // set the topology view's with and height
-                    width: 1000,
-                    height: 580,
+                    width: 200,
+                    height: 200,
 		autoLayout: true,
 		identityKey:'id',
                  adaptive: true,

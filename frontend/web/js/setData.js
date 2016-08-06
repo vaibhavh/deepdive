@@ -38,7 +38,7 @@ nx.define('MyTopology', nx.ui.Component, {
                     autoLayout: true,
 //                    dataProcessor: 'force',
                     width: 1000,
-                    height: 500,
+                    height: 700,
                     nodeConfig: {
                         iconType: function(vertex) {
 //                            return vertex.get('iconType');
@@ -59,7 +59,6 @@ nx.define('MyTopology', nx.ui.Component, {
                             return link.getData()['link_color'];
 //                            return colorTable[Math.floor(Math.random() * 5)];
                         },
-                        width: 2.5
 
                     },
 //                    tooltipManagerConfig: {

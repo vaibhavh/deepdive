@@ -82,41 +82,57 @@ class NexusInterfaceDescriptionController extends Controller
 //            $nexusInterface = NexusInterfaceDescription::find()->where('site=:site',['site'=>$site])->all();
             $srchostarr = array();
             foreach($nexusInterface as $topdata){
-                $srchostarr[] = $topdata['hostname'];
+                $srchostarr[] = substr($topdata['hostname'],0,14);
             }
 //            print_r($srchostarr);
             foreach($nexusInterface as $topdata){
                 $flag=FALSE;
                 $nexusRemotes = NexusCdpNeighborsDetail::find()->select(['remote_interface'])->distinct()->where('mgmt_ip=:mgmt_ip',['mgmt_ip'=>$topdata['mgmt_ip']])->all();   
                 foreach ($nexusRemotes as $remote){
-                    if(in_array($remote['remote_interface'], $srchostarr)){
-                       $key1 = array_search($remote['remote_interface'], array_column($links, 'target'));
-                       $key2 = array_search($topdata['hostname'], array_column($links, 'source'));
-//                       if($links[$key1]['sourse']== $key2){
-//                           echo "key same". $key1;
-//                       }
-//                             echo $remote['remote_interface']." is in array \n";
-                       print_r($links[$key1]['source']);exit;
-                       $links[] = array('source' => $topdata['hostname'], 'target' =>$remote['remote_interface']);
-                       $flag = TRUE;
-                    }
-                }
-                if($flag){
-                    $nodes[] = array('id' => $topdata['hostname'],
-                        'hostname' => $topdata['hostname'],
+                    if(in_array(substr($remote['remote_interface'],0,14), $srchostarr)){
+                       $links[] = array(
+                        'hostname' => substr($topdata['hostname'],0,14), 
+                        'loopback0' => substr($topdata['hostname'],0,14), 
+                        'iconType' => 'Nexus',
+                        'ring_status' => "1",
+                        'media_type' => "",
+                        'physical_interface_desc' =>$topdata['physical_interface_desc'],
+                        'port_channel_desc' => $topdata['port_channel_desc'],
+                        'source' =>substr($topdata['hostname'],0,14), 
+                           'target' =>substr($remote['remote_interface'],0,14),
+                         );
+                     
+                    $nodes[substr($topdata['hostname'],0,14)] = array('id' =>substr($topdata['hostname'],0,14), 
+                        'hostname' => substr($topdata['hostname'],0,14), 
                         'loopback0' => $topdata['mgmt_ip'],
                         'iconType' => 'Nexus',
                         'ring_status' => "1",
                         'media_type' => "",
                         'physical_interface_desc' =>$topdata['physical_interface_desc'],
                         'port_channel_desc' => $topdata['port_channel_desc'],
+//                        'source' => substr($topdata['hostname'],0,14),
+//                        'target' =>substr($remote['remote_interface'],0,14),
                         );
+                    $nodes[substr($remote['remote_interface'],0,14)] = array('id' =>substr($remote['remote_interface'],0,14), 
+                        'hostname' => substr($remote['remote_interface'],0,14), 
+                        'loopback0' => $topdata['mgmt_ip'],
+                        'iconType' => 'Nexus',
+                        'ring_status' => "1",
+                        'media_type' => "",
+                        'physical_interface_desc' =>$topdata['physical_interface_desc'],
+                        'port_channel_desc' => $topdata['port_channel_desc'],
+//                        'source' => substr($topdata['hostname'],0,14),
+//                        'target' =>substr($remote['remote_interface'],0,14),
+                        );
+                    }
                 }
+                
                      
                      
             }
-             
+                
         } 
+        $nodes = array_values($nodes);
             return $this->render('create', [
                 'model' => $model,
                 'items'=>$items,

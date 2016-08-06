@@ -30,7 +30,6 @@ $this->title = 'Nexus Topology';
         'nodes'=>$nodes,
          'links'=>$links
     ]) ?>
-
 </div>
 <div id="clocking_delta_topology">
 </div>
