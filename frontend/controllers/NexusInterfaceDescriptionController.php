@@ -77,8 +77,13 @@ class NexusInterfaceDescriptionController extends Controller
            $site = $post['NexusInterfaceDescription']['site'];
            $nodes=array();
             $links=array();
-            
-            $nexusInterface = NexusInterfaceDescription::find()->where('site=:site and ssh_status=:ssh_status',['site'=>$site, 'ssh_status'=>'1'])->all();
+            $db = Yii::$app->db_rjil;
+//        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
+        $sql = "SELECT * FROM tbl_nexus_interface_description WHERE site='$site'";
+        $command = $db->createCommand($sql);
+        $nexusInterface = $command->queryAll();
+      
+//            $nexusInterface = NexusInterfaceDescription::find()->where('site=:site and ssh_status=:ssh_status',['site'=>$site, 'ssh_status'=>'1'])->all();
 //            $nexusInterface = NexusInterfaceDescription::find()->where('site=:site',['site'=>$site])->all();
             $srchostarr = array();
             foreach($nexusInterface as $topdata){
@@ -87,7 +92,10 @@ class NexusInterfaceDescriptionController extends Controller
 //            print_r($srchostarr);
             foreach($nexusInterface as $topdata){
                 $flag=FALSE;
-                $nexusRemotes = NexusCdpNeighborsDetail::find()->select(['remote_interface'])->distinct()->where('mgmt_ip=:mgmt_ip',['mgmt_ip'=>$topdata['mgmt_ip']])->all();   
+                $cdpsql = "select distinct remote_interface from tbl_nexus_cdp_neighbors_detail where mgmt_ip='".$topdata['mgmt_ip']."'";
+                $cdpcommand = $db->createCommand($cdpsql);
+                $nexusRemotes = $cdpcommand->queryAll();
+//                $nexusRemotes = NexusCdpNeighborsDetail::find()->select(['remote_interface'])->distinct()->where('mgmt_ip=:mgmt_ip',['mgmt_ip'=>$topdata['mgmt_ip']])->all();   
                 foreach ($nexusRemotes as $remote){
                     if(in_array(substr($remote['remote_interface'],0,14), $srchostarr)){
                        $links[] = array(

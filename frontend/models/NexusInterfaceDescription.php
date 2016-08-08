@@ -112,4 +112,8 @@ class NexusInterfaceDescription extends \yii\db\ActiveRecord
     public function getSiteDataBySiteName($site){
         return Yii::$app()->db->createCommand("SELECT id, hostname, mgmt_ip, site, physical_interface_desc, port_channel_desc FROM tbl_nexus_interface_description WHERE site ='{$site}' group by mgmt_ip")->queryAll();
     }
+    
+    public function getDb() {
+        return Yii::$app->db_rjil;
+    }
 }
