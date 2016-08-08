@@ -24,6 +24,7 @@ class PenaltyJobs {
         $ipslaRecords = self::getIpslaRecords();
         $packetDrop = self::getPacketDrop();
         $latency = self::geLatency();
+        $devicePerformance = self::getDevicePerformance();
         $day = date('D');
         $db = Yii::$app->db_rjil;
         $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
@@ -113,6 +114,14 @@ class PenaltyJobs {
                         $data['audit_penalty'] = 0;
                         if (isset($auditPoints[$penelty_point['loopback0']]))
                             $data['audit_penalty'] = (int) $auditPoints[$penelty_point['loopback0']];
+                        if(isset($devicePerformance[$penelty_point['hostname']]))
+                        {
+                            $device_record = $devicePerformance[$penelty_point['hostname']];
+                            $data['buffer_consumption'] = (int) $device_record['buffer_consumption'];
+                            $data['cpu_utilization']    = (int) $device_record['cpu_utilization'];
+                            $data['memory_utilization'] = (int) $device_record['memory_utilization'];
+                            $data['core_dump']          = (int) $device_record['core_dump'];
+                        }
                         $data['table_name'] = $table_name;
                         $data['created_date'] = $created_date;
 
@@ -176,6 +185,10 @@ class PenaltyJobs {
                         'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
                         'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
                         'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
+                        'buffer_consumption' => ['$sum' => '$buffer_consumption'],
+                        'cpu_utilization' => ['$sum' => '$cpu_utilization'],
+                        'memory_utilization' => ['$sum' => '$memory_utilization'],
+                        'core_dump' => ['$sum' => '$core_dump'],
                     ],
                 ],
                 ['$limit' => $limitValue],
@@ -228,6 +241,11 @@ class PenaltyJobs {
                                 'pvb_priority_1' => (int) $value['pvb_priority_1'],
                                 'pvb_priority_2' => (int) $value['pvb_priority_2'],
                                 'pvb_priority_3' => (int) $value['pvb_priority_3'],
+                                'buffer_consumption' => (int) ['$buffer_consumption'],
+                                'cpu_utilization' => (int) ['$cpu_utilization'],
+                                'memory_utilization' => (int) ['$memory_utilization'],
+                                'core_dump' => (int) ['$core_dump'],
+                                
                                 'table_name' => $table_name,
                                 'sapid' => $value['sapid'],
                                 'created_at' => date('Y-m-d'),
@@ -434,6 +452,22 @@ class PenaltyJobs {
         foreach ($dataArr as $mydata) {
             $collection->insert($mydata);
         }
+    }
+    
+    public static function getDevicePerformance() {
+        $db = Yii::$app->db_rjil;
+        $sql = "SELECT `hostname`, `buffer_consumption`, `cpu_utilization`, `memory_utilization`, `core_dump` FROM `device_performance` WHERE `hostname`!='' AND date(created_date)=date(now()) group by `hostname`";
+        $device_performance_points = $db->createCommand($sql)->queryAll();
+        $data = array();
+        if (!empty($device_performance_points)) {
+            foreach ($device_performance_points as $value) {
+                $data[$value['hostname']]['buffer_consumption'] = $value['buffer_consumption'];
+                $data[$value['hostname']]['cpu_utilization']    = $value['cpu_utilization'];
+                $data[$value['hostname']]['memory_utilization'] = $value['memory_utilization'];
+                $data[$value['hostname']]['core_dump']          = $value['core_dump'];
+            }
+        }
+        return $data;
     }
 
 }

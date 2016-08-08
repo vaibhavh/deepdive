@@ -5,7 +5,6 @@ use yii\bootstrap\Modal;
 use frontend\models\CustomActionColumn;
 use dosamigos\datepicker\DatePicker;
 use yii\widgets\ActiveForm;
-use kartik\export\ExportMenu;
 
 /* @var $this yii\web\View */
 /* @var $searchModel app\models\PenaltyPointsSearch */

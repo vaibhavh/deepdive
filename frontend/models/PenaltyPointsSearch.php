@@ -150,6 +150,18 @@ class PenaltyPointsSearch extends PenaltyPoints {
                 'latency' => ['$sum' => '$latency'],
                 'module_temperature' => ['$sum' => '$module_temperature'],
                 'sapid' => ['$first' => '$sapid'],
+                'isis_stability_changed' => ['$sum' => '$isis_stability_changed'],
+                'ldp_stability_changed' => ['$sum' => '$ldp_stability_changed'],
+                'bfd_stability_changed' => ['$sum' => '$bfd_stability_changed'],
+                'bgp_stability_changed' => ['$sum' => '$bgp_stability_changed'],
+                'device_stability' => ['$sum' => '$device_stability'],
+                'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
+                'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
+                'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
+                'buffer_consumption' => ['$sum' => '$buffer_consumption'],
+                'cpu_utilization' => ['$sum' => '$cpu_utilization'],
+                'memory_utilization' => ['$sum' => '$memory_utilization'],
+                'core_dump' => ['$sum' => '$core_dump'],
             ];
 
             $pipeline[]['$limit'] = $limitValue;
@@ -329,6 +341,10 @@ class PenaltyPointsSearch extends PenaltyPoints {
                 'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
                 'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
                 'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
+                'buffer_consumption' => ['$sum' => '$buffer_consumption'],
+                'cpu_utilization' => ['$sum' => '$cpu_utilization'],
+                'memory_utilization' => ['$sum' => '$memory_utilization'],
+                'core_dump' => ['$sum' => '$core_dump'],
             ];
 
             $pipeline[]['$limit'] = $limitValue;
