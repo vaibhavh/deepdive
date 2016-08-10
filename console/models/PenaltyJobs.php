@@ -11,6 +11,9 @@ use Yii;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use \yii\mongodb\Connection;
+use frontend\models\PenaltyPointsSearch;
+use common\models\CommonUtility;
+use common\models\CHelper;
 
 class PenaltyJobs {
 
@@ -24,6 +27,7 @@ class PenaltyJobs {
         $ipslaRecords = self::getIpslaRecords();
         $packetDrop = self::getPacketDrop();
         $latency = self::geLatency();
+        $NipVsShowrun = self::getEnvironmentPenalty();
         $devicePerformance = self::getDevicePerformance();
         $day = date('D');
         $db = Yii::$app->db_rjil;
@@ -96,6 +100,12 @@ class PenaltyJobs {
                         $data['module_temperature'] = 0;
                         $data['packetloss'] = 0;
                         $data['latency'] = 0;
+                        $data['nip_vs_showrun'] = 0;
+                        $data['syslog'] = 0;
+                        $data['buffer_consumption'] = 0;
+                        $data['cpu_utilization']    = 0;
+                        $data['memory_utilization'] = 0;
+                        $data['core_dump']          = 0;
 
                         if (isset($ipslaRecords[$penelty_point['hostname']])) {
                             $ipsla_record = $ipslaRecords[$penelty_point['hostname']];
@@ -114,6 +124,12 @@ class PenaltyJobs {
                         $data['audit_penalty'] = 0;
                         if (isset($auditPoints[$penelty_point['loopback0']]))
                             $data['audit_penalty'] = (int) $auditPoints[$penelty_point['loopback0']];
+                        
+                        if (!empty($NipVsShowrun) && isset($NipVsShowrun[$penelty_point['loopback0']])) {
+                            $data['nip_vs_showrun'] = (int) $NipVsShowrun[$penelty_point['loopback0']]['nip_vs_showrun'];
+                            $data['syslog'] = (int) $NipVsShowrun[$penelty_point['loopback0']]['syslog'];
+                        }
+                        
                         if(isset($devicePerformance[$penelty_point['hostname']]))
                         {
                             $device_record = $devicePerformance[$penelty_point['hostname']];
@@ -138,6 +154,7 @@ class PenaltyJobs {
     }
 
     public static function fetchWeeklyData() {
+        echo "\nStart weekly collection at " . date("Y-m-d H:i:s");
         ini_set("memory_limit", "-1");
         error_reporting(E_ALL);
         ini_set("display_errors", 1);
@@ -186,9 +203,9 @@ class PenaltyJobs {
                         'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
                         'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
                         'buffer_consumption' => ['$sum' => '$buffer_consumption'],
-                        'cpu_utilization' => ['$sum' => '$cpu_utilization'],
+                        'cpu_utilization'    => ['$sum' => '$cpu_utilization'],
                         'memory_utilization' => ['$sum' => '$memory_utilization'],
-                        'core_dump' => ['$sum' => '$core_dump'],
+                        'core_dump'          => ['$sum' => '$core_dump'],
                     ],
                 ],
                 ['$limit' => $limitValue],
@@ -241,10 +258,10 @@ class PenaltyJobs {
                                 'pvb_priority_1' => (int) $value['pvb_priority_1'],
                                 'pvb_priority_2' => (int) $value['pvb_priority_2'],
                                 'pvb_priority_3' => (int) $value['pvb_priority_3'],
-                                'buffer_consumption' => (int) ['$buffer_consumption'],
-                                'cpu_utilization' => (int) ['$cpu_utilization'],
-                                'memory_utilization' => (int) ['$memory_utilization'],
-                                'core_dump' => (int) ['$core_dump'],
+                                'buffer_consumption' => (int) $value['$buffer_consumption'],
+                                'cpu_utilization'    => (int) $value['$cpu_utilization'],
+                                'memory_utilization' => (int) $value['$memory_utilization'],
+                                'core_dump'          => (int) $value['$core_dump'],
                                 
                                 'table_name' => $table_name,
                                 'sapid' => $value['sapid'],
@@ -288,7 +305,7 @@ class PenaltyJobs {
 //        }')
 //        );
 
-
+        echo "\nEnd weekly collection at " . date("Y-m-d H:i:s");
         die("done");
     }
 
@@ -454,6 +471,54 @@ class PenaltyJobs {
         }
     }
     
+    public static function exportData() {
+        error_reporting(E_ALL);
+        ini_set("display_errros", 1);
+        ini_set('max_execution_time', 86400);
+        ini_set("memory_limit", "-1");
+        $basePath = \Yii::getAlias('@app') . DIRECTORY_SEPARATOR . '../uploads' . DIRECTORY_SEPARATOR;
+        //echo $basePath;die;
+        $pointsModel = new PenaltyPointsSearch();
+        $dataProvider = $pointsModel->getData([]);
+        if (!empty($dataProvider)) {
+            $dataProvider = $dataProvider['data']->allModels;
+            $header = ['hostname', 'loopback0', 'Sapid', 'device_type', 'ios_compliance_status', 'bgp_available', 'isis_available', 'resilent_status', 'crc', 'input_errors',
+                'output_errors', 'interface_resets', 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'isis_stability_changed', 'ldp_stability_changed',
+                'bfd_stability_changed', 'bgp_stability_changed', 'device_stability', 'pvb_priority_1', 'pvb_priority_2', 'pvb_priority_3', 'total'];
+            CommonUtility::generateExcelSaveFileOnServer($header, $dataProvider, 'excel.xls', $basePath);
+        }
+        die("Done");
+    }
+
+    public static function sendEmail() {
+        $to[] = array("email" => "prashant.s@infinitylabs.in", "name" => "Prashant Swami");
+        $from = "support@rjilauto.com";
+        $from_name = "RJILAuto Team";
+        $subject = "Corelation Report";
+        $message = "Corelation Report";
+        $isSent = CommonUtility::sendmailWithAttachment($to, "prashant", $from, $from_name, $subject, $message, '', '', '');
+        echo "<pre/>";
+        print_r($isSent);
+        die;
+    }
+
+    public static function getEnvironmentPenalty() {
+        $db = Yii::$app->db_rjil;
+        $sql = "select nip_vs_showrun,loopback0,syslog from built_environment_condition_penalty WHERE date(created_at)=date(now())";
+        $command = $db->createCommand($sql);
+        $nipvsshowrunData = $command->queryAll();
+        $auditPenalty = 0;
+        $data = array();
+        if (!empty($nipvsshowrunData)) {
+            foreach ($nipvsshowrunData as $nipvsshowrunDat) {
+                if (!empty($nipvsshowrunDat)) {
+                    $data[$nipvsshowrunDat['loopback0']] = ['nip_vs_showrun' => $nipvsshowrunDat['nip_vs_showrun'], 'syslog' => $nipvsshowrunDat['syslog']];
+                }
+            }
+        }
+        return $data;
+    }
+    
     public static function getDevicePerformance() {
         $db = Yii::$app->db_rjil;
         $sql = "SELECT `hostname`, `buffer_consumption`, `cpu_utilization`, `memory_utilization`, `core_dump` FROM `device_performance` WHERE `hostname`!='' AND date(created_date)=date(now()) group by `hostname`";
@@ -469,5 +534,4 @@ class PenaltyJobs {
         }
         return $data;
     }
-
 }
