@@ -81,7 +81,6 @@ class PenaltyPointsController extends Controller {
             }
         }
         $circleMasterData = $topTenModel->getCircleData();
-
         return $this->render('report', [
                     'model' => $model,
                     'pointsModel' => $model,

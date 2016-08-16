@@ -25,25 +25,18 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title);
     ?><span style="color: #6666cc;"><h4><b><?= "Data from [ From $fromDate till $toDate ]"; ?></b></h4></span> </h1>
     <?php
+    \yii\widgets\Pjax::begin(['id' => 'penlaty',
+        'timeout' => false,
+        'enablePushState' => false,
+        'clientOptions' => ['method' => 'POST']]);
+    
     $gridColumns = [
             ['class' => 'kartik\grid\SerialColumn'],
+            'hostname',
+            'loopback0',
+            'sapid',
             [
-                'filter' => false,
-                'value' => "hostname",
-                'attribute' => "hostname"
-            ],
-            [
-                'filter' => false,
-                'value' => "loopback0",
-                'attribute' => "loopback0"
-            ],
-            [
-                'filter' => false,
-                'value' => "sapid",
-                'attribute' => "sapid"
-            ],
-            [
-                'filter' => false,
+                'filter' => true,
                 'value' => "device_type",
                 'attribute' => "device_type"
             ],
@@ -70,27 +63,90 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'resilent_status',
                 'value' => 'resilent_status'
             ],
-            'crc',
+            [
+                'label' => 'CRC',
+                'filter' => false,
+                'attribute' => 'crc',
+                'value' => 'crc'
+            ],
             'input_errors',
             'output_errors',
             'interface_resets',
             'power',
             'optical_power',
             'module_temperature',
-            'packetloss',
-            'audit_penalty',
+            [
+                'label' => 'Device Uptime',
+                'filter' => false,
+                'attribute' => 'device_stability',
+                'value' => 'device_stability'
+            ],
+            [
+                'label' => 'Packet Loss',
+                'filter' => false,
+                'attribute' => 'packetloss',
+                'value' => 'packetloss'
+            ],
             'latency',
+            [
+                'label' => 'Security Compliance',
+                'filter' => false,
+                'attribute' => 'audit_penalty',
+                'value' => 'audit_penalty'
+            ],
+            [
+                'label' => 'PvB Priority 1',
+                'filter' => false,
+                'attribute' => 'pvb_priority_1',
+                'value' => 'pvb_priority_1'
+            ],
+            [
+                'label' => 'PvB Priority 2',
+                'filter' => false,
+                'attribute' => 'pvb_priority_2',
+                'value' => 'pvb_priority_2'
+            ],
+            [
+                'label' => 'PvB Priority 3',
+                'filter' => false,
+                'attribute' => 'pvb_priority_3',
+                'value' => 'pvb_priority_3'
+            ],
+            [
+                'label' => 'ISIS Stability',
+                'filter' => false,
+                'attribute' => 'isis_stability_changed',
+                'value' => 'isis_stability_changed'
+            ],
+            [
+                'label' => 'BGP Stability',
+                'filter' => false,
+                'attribute' => 'bgp_stability_changed',
+                'value' => 'bgp_stability_changed'
+            ],
+            [
+                'label' => 'Bfd Stability',
+                'filter' => false,
+                'attribute' => 'bfd_stability_changed',
+                'value' => 'bfd_stability_changed'
+            ],
+            [
+                'label' => 'LDP Stability',
+                'filter' => false,
+                'attribute' => 'ldp_stability_changed',
+                'value' => 'ldp_stability_changed'
+            ],
             'total',
-            //['class' => 'frontend\models\CustomActionColumn'],
+            ['class' => 'frontend\models\CustomActionColumn'],
         ];
     ?>
-    <div style="padding-top: 50px;padding-left: 10px;position: absolute;"> <?=
-        ExportMenu::widget([
+    <div style="padding-top: 50px;padding-left: 10px;position: absolute;"> 
+    <?php
+       echo ExportMenu::widget([
         'dataProvider' => $exportAll,
-        'filterModel' => $searchModel,
-        'columns' => $gridColumns,
-    ]);
-    ?></div>
+        'columns' => $gridColumns
+    ]); ?>
+    </div>
     <?=
     GridView::widget([
         'dataProvider' => $dataProvider,
@@ -116,9 +172,10 @@ $this->params['breadcrumbs'][] = $this->title;
                     ['content' => 'Device Details', 'options' => ['colspan' => 4, 'class' => 'text-center warning']],
                     ['content' => 'IOS & SMU Compliance', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
                     ['content' => 'Resiliency', 'options' => ['colspan' => 3, 'class' => 'text-center warning']],
-                    ['content' => 'Interface Errors', 'options' => ['colspan' => 7, 'class' => 'text-center warning']],
+                    ['content' => 'Interface Errors', 'options' => ['colspan' => 8, 'class' => 'text-center warning']],
                     ['content' => 'IPSLA', 'options' => ['colspan' => 2, 'class' => 'text-center warning']],
-                    ['content' => 'Configuration Audit', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
+                    ['content' => 'Configuration Audit', 'options' => ['colspan' => 4, 'class' => 'text-center warning']],
+                    ['content' => 'Protocol Stability', 'options' => ['colspan' => 4, 'class' => 'text-center warning']],
                     ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
                     ['content' => '', 'options' => ['colspan' => 1, 'class' => 'text-center warning']],
                 ],
@@ -127,10 +184,9 @@ $this->params['breadcrumbs'][] = $this->title;
         ],
         'columns' => $gridColumns,
     ]);
-    //$this->registerJsFile("js/bootstrap.min.js", ['position' => \yii\web\View::POS_END]);
+   // $this->registerJsFile("/deepdive/frontend/web/js/bootstrap.min.js", ['position' => \yii\web\View::POS_END]);
     ?>
-</div>
-
+    <?php Pjax::end(); ?></div>   
 <style>
     .container{
         width: 100%;

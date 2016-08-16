@@ -98,7 +98,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'loopback0',
             'sapid',
             [
-                'filter' => false,
+                'filter' => true,
                 'value' => "device_type",
                 'attribute' => "device_type"
             ],

@@ -524,8 +524,8 @@ class PenaltyJobs {
             $to[] = array("email" => "pm@infinitylabs.in", "name" => "PM");
             $to[] = array("email" => "vaibhav.h@infinitylabs.in", "name" => "Vaibhav Harihar");
             $to[] = array("email" => "kpanse@cisco.com", "name" => "krishnaji Panse");
-        $from = "support@rjilauto.com";
-        $from_name = "RJILAuto Team";
+            $from = "support@rjilauto.com";
+            $from_name = "RJILAuto Team";
             $subject = "Penalty Point report from $fromDate to $toDate";
             $message = "Dear All<br/>";
             $message .= "<p></p>";
@@ -540,7 +540,7 @@ class PenaltyJobs {
             } else {
                 echo "Mail Not Sent";
             };
-    }
+        }
     }
 
     public static function getEnvironmentPenalty() {
@@ -571,7 +571,7 @@ class PenaltyJobs {
                 $data[$value['hostname']]['cpu_utilization'] = $value['cpu_utilization'];
                 $data[$value['hostname']]['memory_utilization'] = $value['memory_utilization'];
                 $data[$value['hostname']]['core_dump'] = $value['core_dump'];
-}
+            }
         }
         return $data;
     }
