@@ -59,38 +59,11 @@ class PenaltyPointsSearch extends PenaltyPoints {
      *
      * @return ActiveDataProvider
      */
-    public function search($params, $host_name = '') {
-//        ini_set('max_execution_time', 86400);
-//        ini_set("memory_limit", "-1");
-//        error_reporting(E_ALL);
-//        ini_set("display_errors", 1);
-//        $mySearchParams = [];
-//        if (!empty($params['PenaltyPointsSearch'])) {
-//            $mySearchParams = $params['PenaltyPointsSearch'];
-//            $mySearchParams = array_filter($mySearchParams);
-//        }
-//
-//        $connection = new \MongoClient(Yii::$app->mongodb->dsn);
-//        $database   = $connection->deepdive;
-//        $collection = $database->week_penalty_master;
-//        //$collection = Yii::$app->commonUtility->mongoDbConnection('deepdive', 'weekdayPenalty');
-//        $cursors = $collection->find($mySearchParams);
-//
-//        $penaltyPoints = array();
-//        foreach ($cursors as $cursor) {
-//            unset($cursor['_id']);
-//
-//            $penaltyPoints[] = $cursor;
-//        }
-//
-//        // add conditions that should always apply here
-//        $penaltyPointsProvider = new ArrayDataProvider([
-//            'allModels' => $penaltyPoints,
-//            'pagination' => ['pageSize' => 20]
-//        ]);
-//
-//        $this->load($params);
-//        return $penaltyPointsProvider;
+    public function search($params) {
+        ini_set('max_execution_time', 86400);
+        ini_set("memory_limit", "-1");
+        error_reporting(E_ALL);
+        ini_set("display_errors", 1);
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
         $database = $connection->deepdive;
         $collection = $database->week_master;
@@ -150,6 +123,18 @@ class PenaltyPointsSearch extends PenaltyPoints {
                 'latency' => ['$sum' => '$latency'],
                 'module_temperature' => ['$sum' => '$module_temperature'],
                 'sapid' => ['$first' => '$sapid'],
+                'isis_stability_changed' => ['$sum' => '$isis_stability_changed'],
+                'ldp_stability_changed' => ['$sum' => '$ldp_stability_changed'],
+                'bfd_stability_changed' => ['$sum' => '$bfd_stability_changed'],
+                'bgp_stability_changed' => ['$sum' => '$bgp_stability_changed'],
+                'device_stability' => ['$sum' => '$device_stability'],
+                'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
+                'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
+                'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
+                'buffer_consumption' => ['$sum' => '$buffer_consumption'],
+                'cpu_utilization' => ['$sum' => '$cpu_utilization'],
+                'memory_utilization' => ['$sum' => '$memory_utilization'],
+                'core_dump' => ['$sum' => '$core_dump'],
             ];
 
             $pipeline[]['$limit'] = $limitValue;
@@ -251,6 +236,12 @@ class PenaltyPointsSearch extends PenaltyPoints {
         foreach ($penaltyPoints as $key => $record) {
             $record['total'] = 0;
             foreach ($record as $key1 => $recordValue) {
+                if ($record['device_type'] == 'CSR')
+                    $record['device_type'] = "SAR";
+                if ($record['device_type'] == 'CCR')
+                    $record['device_type'] = "AG3";
+                if ($record['device_type'] == 'AAR')
+                    $record['device_type'] = "AG2";
                 if (isset($penaltyPointMaster[$record['device_type']][$key1]) && $recordValue > 0) {
                     $record['total'] += $record[$key1] = (int) $recordValue * (int) $penaltyPointMaster[$record['device_type']][$key1];
                 }
@@ -286,30 +277,37 @@ class PenaltyPointsSearch extends PenaltyPoints {
             if (!empty($modelData['sapid'])) {
                 $match['sapid'] = $modelData['sapid'];
             }
+            if (!empty($modelData['device_type'])) {
+                $match['device_type'] = $modelData['device_type'];
+            }
         }
 
         if (!empty($host_name)) {
             $match['hostname'] = $host_name;
         }
-        $limitValue = 1000;
+        $limitValue = 10000;
         $offsetValue = 0;
         $details = array();
-        for ($i = 0; $i < 1; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $pipeline = array();
             $data = array();
             $collection = $database->$table_name;
             $pipeline = array();
             if (!empty($match)) {
+//                $match[] = ['AG1'];
                 $pipeline[]['$match'] = $match;
             }
             //$pipeline[]['$sort'] = ['hostname'=>-1];
             $pipeline[]['$group'] = [
                 '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
+                'hostname' => ['$first' => '$hostname'],
+                'loopback0' => ['$first' => '$loopback0'],
+                'sapid' => ['$first' => '$sapid'],
+                'device_type' => ['$first' => '$device_type'],
                 'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
                 'bgp_available' => ['$sum' => '$bgp_available'],
                 'isis_available' => ['$sum' => '$isis_available'],
                 'resilent_status' => ['$sum' => '$resilent_status'],
-                'device_type' => ['$first' => '$device_type'],
                 'crc' => ['$sum' => '$crc'],
                 'input_errors' => ['$sum' => '$input_errors'],
                 'output_errors' => ['$sum' => '$output_errors'],
@@ -320,7 +318,6 @@ class PenaltyPointsSearch extends PenaltyPoints {
                 'audit_penalty' => ['$sum' => '$audit_penalty'],
                 'latency' => ['$sum' => '$latency'],
                 'module_temperature' => ['$sum' => '$module_temperature'],
-                'sapid' => ['$first' => '$sapid'],
                 'isis_stability_changed' => ['$sum' => '$isis_stability_changed'],
                 'ldp_stability_changed' => ['$sum' => '$ldp_stability_changed'],
                 'bfd_stability_changed' => ['$sum' => '$bfd_stability_changed'],
@@ -329,6 +326,10 @@ class PenaltyPointsSearch extends PenaltyPoints {
                 'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
                 'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
                 'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
+                'buffer_consumption' => ['$sum' => '$buffer_consumption'],
+                'cpu_utilization' => ['$sum' => '$cpu_utilization'],
+                'memory_utilization' => ['$sum' => '$memory_utilization'],
+                'core_dump' => ['$sum' => '$core_dump'],
             ];
 
             $pipeline[]['$limit'] = $limitValue;
@@ -341,8 +342,8 @@ class PenaltyPointsSearch extends PenaltyPoints {
                     $host_name = $dataDtl['_id']['hostname'];
                     $loopback0 = $dataDtl['_id']['loopback0'];
                     unset($dataDtl['_id']);
-                    $dataDtl['hostname'] = $host_name;
-                    $dataDtl['loopback0'] = $loopback0;
+//                    $dataDtl['hostname'] = $host_name;
+//                    $dataDtl['loopback0'] = $loopback0;
                     $details[$host_name] = $dataDtl;
                 }
             }
@@ -351,7 +352,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
             }
 
             $offsetValue = $limitValue;
-            $limitValue = $limitValue + 1000;
+            $limitValue = $limitValue + 10000;
         }
 
         $recordWithSetPoints = self::setPoints($details);
@@ -363,7 +364,7 @@ class PenaltyPointsSearch extends PenaltyPoints {
                     'isis_stability_changed', 'bfd_stability_changed', 'bgp_stability_changed', 'ldp_stability_changed', 'device_stability', 'pvb_priority_1',
                     'pvb_priority_2', 'pvb_priority_3']],
         ]);
-        $penaltyPointsProviderReport = new ArrayDataProvider([
+        $penaltyPointsExportProvider = new ArrayDataProvider([
             'allModels' => $recordWithSetPoints,
             'pagination' => ['pageSize' => 1000000],
             'sort' => ['attributes' => ['hostname', 'loopback0', 'ios_compliance_status', 'bgp_available', 'isis_available', 'isis_available', 'device_type', 'crc', 'input_errors', 'output_errors', 'interface_resets'
@@ -371,10 +372,10 @@ class PenaltyPointsSearch extends PenaltyPoints {
                     'isis_stability_changed', 'bfd_stability_changed', 'bgp_stability_changed', 'ldp_stability_changed', 'device_stability', 'pvb_priority_1',
                     'pvb_priority_2', 'pvb_priority_3']],
         ]);
+        if (!empty($params))
+            $this->load($params);
 
-        $this->load($params);
-
-        return array('data' => $penaltyPointsProvider, 'date' => $date, 'details' => $recordWithSetPoints, 'penaltyPointsProviderExport' => $penaltyPointsProviderReport);
+        return array('data' => $penaltyPointsProvider, 'date' => $date, 'details' => $recordWithSetPoints, 'export' => $penaltyPointsExportProvider);
     }
 
     public function getGraph($circle = '') {

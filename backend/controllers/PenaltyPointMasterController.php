@@ -122,7 +122,8 @@ class PenaltyPointMasterController extends Controller {
      * @throws NotFoundHttpException if the model cannot be found
      */
     protected function findMongoDbModel($id) {
-        if (($model = PenaltyPointMaster::mongoDbFindOne($id)) !== null) {
+        $model = new PenaltyPointMaster();
+        if (($model = $model->mongoDbFindOne($id)) !== null) {
             return $model;
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');

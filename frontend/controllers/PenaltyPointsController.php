@@ -12,8 +12,9 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\bootstrap\Modal;
 use app\models\Model;
-//use yii\components\CHelper;
-use \CHelper;
+use common\models\CHelper;
+use common\models\CommonUtility;
+use SMTP;
 
 /**
  * PenaltyPointsController implements the CRUD actions for PenaltyPoints model.
@@ -100,14 +101,14 @@ class PenaltyPointsController extends Controller {
         error_reporting(E_ALL);
         ini_set("display_errors", 1);
         $pointsModel = new PenaltyPointsSearch();
-
-        $dataProvider = $pointsModel->getData(Yii::$app->request->queryParams);
+        $data = Yii::$app->request->post();
+        $dataProvider = $pointsModel->getData(Yii::$app->request->post());
         return $this->render('index', [
                     'dataProvider' => $dataProvider['data'],
                     'date' => $dataProvider['date'],
                     'searchModel' => $pointsModel,
-                    'export' => $dataProvider['penaltyPointsProviderExport'],
-        ]);
+                    'export' => $dataProvider['export'],
+                        ], true);
     }
 
     /**
@@ -263,8 +264,30 @@ class PenaltyPointsController extends Controller {
         return $date;
     }
 
-    public function downloadData() {
-        
+    public function actionExportData() {
+
+        ini_set('max_execution_time', 86400);
+        ini_set("memory_limit", "-1");
+        $basePath = \Yii::getAlias('@webroot') . '/../uploads/';
+        $pointsModel = new PenaltyPointsSearch();
+        $dataProvider = $pointsModel->getData(Yii::$app->request->queryParams);
+
+        $dataProvider = $dataProvider['data']->allModels;
+        $header = ['hostname', 'loopback0', 'Sapid', 'device_type', 'ios_compliance_status', 'bgp_available', 'isis_available', 'resilent_status', 'crc', 'input_errors',
+            'output_errors', 'interface_resets', 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'isis_stability_changed', 'ldp_stability_changed',
+            'bfd_stability_changed', 'bgp_stability_changed', 'device_stability', 'pvb_priority_1', 'pvb_priority_2', 'pvb_priority_3', 'total'];
+        CommonUtility::generateExcelSaveFileOnServer($header, $dataProvider, 'excel.xls', $basePath);
+        die("Done");
+    }
+
+    public function actionSendEmailTest() {
+        $smtp = new SMTP;
+        CHelper::debug($smtp);
+        $to[] = array("email" => "prashant.s@infinitylabs.in", "name" => "Prashant Swami");
+        $from = "support@rjilauto.com";
+        $from_name = "RJILAuto Team";
+        $subject = "Corelation Report";
+        CommonUtility::sendmailWithAttachment($to, "prashant", $from, $from_name, $subject, $message, '', '', '');
     }
 
 }

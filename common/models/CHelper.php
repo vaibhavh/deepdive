@@ -1,22 +1,10 @@
 <?php
 
-/** * ***********************************************************
- *  File Name : CHelper.php
- *  File Description: CHelper class file to shorten the yii common useful functions .
- *  Author: Benchmark, 
- *  Created Date: 17 Feb 2014
- *  Created By: Anand Rathi & Rakesh Jaware.
- * ************************************************************* */
-/*      Note::  Please access the functions defined in this class as given below
- *              Eg: For getting the root path to the webapp
- *                  $rootPath = Helper::webapp()
- *                  i.e CHelper::functionName();
- *                  
- *              Eg: for creating the text area using function declared in this class use following syntax
- *                  echo CHelper::textArea("name", 'Default Value');
- *                  i.e  CHelper::functionName()
- * 
- */
+namespace common\models;
+
+use Yii;
+use yii\base\Model;
+
 class CHelper {
 
     public static function getReturnUrl($model_name = '') {
@@ -809,7 +797,7 @@ class CHelper {
         //Allow access for 1b with checking given modules and also give access for perticular users.
         $allow_modules = array('REL_ALLOCATOR_ACCESS', 'AUDITOR_ACCESS', 'QA_MANAGER_ACCESS', 'SUBMITTED_SITES');
         $qa_manager_ids = array(1835, 1643, 1838, 1912, 5);
-        $auditor_ids = array(471, 1922, 1919, 1918, 1920,1940,5,2006,2007,2009,2075,2365,2364,2398,2396,2394,2391,2395,2392,2393);
+        $auditor_ids = array(471, 1922, 1919, 1918, 1920, 1940, 5, 2006, 2007, 2009, 2075, 2365, 2364, 2398, 2396, 2394, 2391, 2395, 2392, 2393);
         //deleted reviewers 1939 1969 2003 2008
         $id = Yii::app()->session['login']['user_id'];
         if (in_array($module, $allow_modules)) {
@@ -817,7 +805,7 @@ class CHelper {
                 return true;
             } elseif ($module == 'QA_MANAGER_ACCESS' && in_array($id, $qa_manager_ids)) {
                 return true;
-            } elseif ($module == 'SUBMITTED_SITES' && in_array($id, array(5,33,11))) {
+            } elseif ($module == 'SUBMITTED_SITES' && in_array($id, array(5, 33, 11))) {
                 return true;
             } else {
                 return FALSE;
@@ -827,7 +815,7 @@ class CHelper {
         //Allow access for L2 Switch 1b with checking given modules and also give access for perticular users.
         $allow_access_rights = array('L2_QA_MANAGER', 'L2_QA_REVIEWER', 'AUDITOR_ACCESS', 'QA_MANAGER_ACCESS');
         $l2_qa_manager_ids = array(5, 17, 19, 22, 2650, 1835, 1643, 1838, 1912);
-        $l2_reviewer_ids = array(5, 16, 21, 22, 2650, 471, 1922, 1919, 1918, 1920,1940, 2006,2007,2009,2075,2365,2364,2398,2396,2394,2391,2395,2392,2393);
+        $l2_reviewer_ids = array(5, 16, 21, 22, 2650, 471, 1922, 1919, 1918, 1920, 1940, 2006, 2007, 2009, 2075, 2365, 2364, 2398, 2396, 2394, 2391, 2395, 2392, 2393);
         //deleted reviewers 1939 1969 2003 2008
         if (in_array($module, $allow_access_rights)) {
             if (($module == 'L2_QA_MANAGER' || $module == 'QA_MANAGER_ACCESS' ) && in_array($id, $l2_qa_manager_ids)) {

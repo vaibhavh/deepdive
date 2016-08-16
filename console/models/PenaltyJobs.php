@@ -11,6 +11,9 @@ use Yii;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use \yii\mongodb\Connection;
+use frontend\models\PenaltyPointsSearch;
+use common\models\CommonUtility;
+use common\models\CHelper;
 
 class PenaltyJobs {
 
@@ -24,11 +27,11 @@ class PenaltyJobs {
         $ipslaRecords = self::getIpslaRecords();
         $packetDrop = self::getPacketDrop();
         $latency = self::geLatency();
+        $NipVsShowrun = self::getEnvironmentPenalty();
+        $devicePerformance = self::getDevicePerformance();
         $day = date('D');
         $db = Yii::$app->db_rjil;
         $sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
-        //$sql = "SELECT * FROM tbl_built_penalty_points WHERE date(created_date)=date(now())";
-        //$sql = "SELECT *,tu.modified_sapid FROM tbl_built_penalty_points as t INNER JOIN ndd_host_name as tu ON(t.hostname=tu.host_name AND tu.is_deleted=0) WHERE date(created_date)='2016-06-28' limit 5000";
         $command = $db->createCommand($sql);
         $penelty_points = $command->queryAll();
         $connection = new \MongoClient(Yii::$app->mongodb->dsn);
@@ -95,6 +98,12 @@ class PenaltyJobs {
                         $data['module_temperature'] = 0;
                         $data['packetloss'] = 0;
                         $data['latency'] = 0;
+                        $data['nip_vs_showrun'] = 0;
+                        $data['syslog'] = 0;
+                        $data['buffer_consumption'] = 0;
+                        $data['cpu_utilization'] = 0;
+                        $data['memory_utilization'] = 0;
+                        $data['core_dump'] = 0;
 
                         if (isset($ipslaRecords[$penelty_point['hostname']])) {
                             $ipsla_record = $ipslaRecords[$penelty_point['hostname']];
@@ -113,6 +122,19 @@ class PenaltyJobs {
                         $data['audit_penalty'] = 0;
                         if (isset($auditPoints[$penelty_point['loopback0']]))
                             $data['audit_penalty'] = (int) $auditPoints[$penelty_point['loopback0']];
+
+                        if (!empty($NipVsShowrun) && isset($NipVsShowrun[$penelty_point['loopback0']])) {
+                            $data['nip_vs_showrun'] = (int) $NipVsShowrun[$penelty_point['loopback0']]['nip_vs_showrun'];
+                            $data['syslog'] = (int) $NipVsShowrun[$penelty_point['loopback0']]['syslog'];
+                        }
+
+                        if (isset($devicePerformance[$penelty_point['hostname']])) {
+                            $device_record = $devicePerformance[$penelty_point['hostname']];
+                            $data['buffer_consumption'] = (int) $device_record['buffer_consumption'];
+                            $data['cpu_utilization'] = (int) $device_record['cpu_utilization'];
+                            $data['memory_utilization'] = (int) $device_record['memory_utilization'];
+                            $data['core_dump'] = (int) $device_record['core_dump'];
+                        }
                         $data['table_name'] = $table_name;
                         $data['created_date'] = $created_date;
 
@@ -129,6 +151,7 @@ class PenaltyJobs {
     }
 
     public static function fetchWeeklyData() {
+        echo "\nStart weekly collection at " . date("Y-m-d H:i:s");
         ini_set("memory_limit", "-1");
         error_reporting(E_ALL);
         ini_set("display_errors", 1);
@@ -176,6 +199,10 @@ class PenaltyJobs {
                         'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
                         'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
                         'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
+                        'buffer_consumption' => ['$sum' => '$buffer_consumption'],
+                        'cpu_utilization' => ['$sum' => '$cpu_utilization'],
+                        'memory_utilization' => ['$sum' => '$memory_utilization'],
+                        'core_dump' => ['$sum' => '$core_dump'],
                     ],
                 ],
                 ['$limit' => $limitValue],
@@ -228,6 +255,10 @@ class PenaltyJobs {
                                 'pvb_priority_1' => (int) $value['pvb_priority_1'],
                                 'pvb_priority_2' => (int) $value['pvb_priority_2'],
                                 'pvb_priority_3' => (int) $value['pvb_priority_3'],
+                                'buffer_consumption' => (int) $value['$buffer_consumption'],
+                                'cpu_utilization' => (int) $value['$cpu_utilization'],
+                                'memory_utilization' => (int) $value['$memory_utilization'],
+                                'core_dump' => (int) $value['$core_dump'],
                                 'table_name' => $table_name,
                                 'sapid' => $value['sapid'],
                                 'created_at' => date('Y-m-d'),
@@ -270,14 +301,14 @@ class PenaltyJobs {
 //        }')
 //        );
 
-
+        echo "\nEnd weekly collection at " . date("Y-m-d H:i:s");
         die("done");
     }
 
     public static function getIpslaRecords() {
         $db = Yii::$app->db_rjil;
 //        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
-        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR') AND date(created_at)=date(now())";
+        $sql = "SELECT * FROM dd_ipsla_errors WHERE substring(host_name,9,3) IN ('ESR','PAR','AAR','CCR','CSR') AND date(created_at)=date(now())";
         $command = $db->createCommand($sql);
         $ipsla_points = $command->queryAll();
 
@@ -433,6 +464,125 @@ class PenaltyJobs {
         $dataArr[29] = array('section' => 'IOS & SMU Compliance', 'device_type' => 'AG1', 'subsection' => 'iOS', 'rule' => 'ios_compliance_status', 'frequency' => '24 hours', 'points' => '1000', 'created_at' => '2016-06-24 12:00:00', 'modified_at' => '0000-00-00 00:00:00', 'created_by' => '1', 'modified_by' => '0', 'is_deleted' => '0', 'is_active' => '1');
         foreach ($dataArr as $mydata) {
             $collection->insert($mydata);
+        }
+    }
+
+    public static function exportData() {
+        error_reporting(E_ALL);
+        ini_set("display_errros", 1);
+        ini_set('max_execution_time', 86400);
+        ini_set("memory_limit", "-1");
+        echo "\nStart collecting data : " . date("Y:m:d H:i:s");
+        @exec("rm -r /var/www/html/deepdive/uploads/*");
+        $basePath = \Yii::getAlias('@app') . DIRECTORY_SEPARATOR . '../uploads' . DIRECTORY_SEPARATOR;
+        $pointsModel = new PenaltyPointsSearch();
+        $dataProvider = $pointsModel->getData([]);
+        $data = array();
+        if (!empty($dataProvider)) {
+            $dataProvider = $dataProvider['data']->allModels;
+            $dataProvider = array_chunk($dataProvider, 40000);
+            $header = ['hostname', 'loopback0', 'Sapid', 'device_type', 'ios_compliance_status', 'bgp_available', 'isis_available', 'resilent_status', 'crc', 'input_errors',
+                'output_errors', 'interface_resets', 'power', 'optical_power', 'packetloss', 'audit_penalty', 'latency', 'module_temperature', 'isis_stability_changed', 'ldp_stability_changed',
+                'bfd_stability_changed', 'bgp_stability_changed', 'device_stability', 'pvb_priority_1', 'pvb_priority_2', 'pvb_priority_3',
+                'buffer_consumption', 'cpu_utilization', 'memory_utilization', 'core_dump', 'total'];
+            if (!empty($dataProvider)) {
+                $id = 1;
+                foreach ($dataProvider as $key => $dataPro) {
+                    $data['Sheet_' . $id]['header'] = $header;
+                    $data['Sheet_' . $id]['rows'] = $dataPro;
+                    $id++;
+                }
+            }
+            echo "\nEnd collecting data : " . date("Y:m:d H:i:s");
+            echo "\nStart Create excel sheet on server : " . date("Y:m:d H:i:s");
+
+            CommonUtility::generateExcelMultipleTabOnServer($data, 'penalty_point_summary.xls', $basePath);
+            echo "\nEnd create excel sheet on server : " . date("Y:m:d H:i:s");
+            $fileName = "uploads/penalty_point_summary.zip";
+            echo "\nStart create zip File on server : " . date("Y:m:d H:i:s");
+            self::CreateZip($fileName);
+            echo "\nEnd create zip File on server : " . date("Y:m:d H:i:s");
+        }
+        $fileName = "penalty_point_summary.zip";
+        echo "\nStart Send Mail : " . date("Y:m:d H:i:s");
+        self::sendEmail($basePath . $fileName, $fileName);
+        echo "\nEnd Send Mail : " . date("Y:m:d H:i:s");
+        die("Done");
+    }
+
+    public static function sendEmail($attachment_path = '', $file_name = '') {
+        error_reporting(E_ALL);
+        ini_set("display_errros", 1);
+        ini_set('max_execution_time', 86400);
+        ini_set("memory_limit", "-1");
+        ini_set("message_size_limit", 1024000000000000);
+        if (file_exists($attachment_path)) {
+            $fromDate = date('d-m-Y', strtotime('-6 day', strtotime(date("d-m-Y"))));
+            $toDate = date("d-m-Y");
+            $cc = $to = array();
+            $to[] = array("email" => "prashant.s@infinitylabs.in", "name" => "Prashant Swami");
+            $to[] = array("email" => "pm@infinitylabs.in", "name" => "PM");
+            $to[] = array("email" => "vaibhav.h@infinitylabs.in", "name" => "Vaibhav Harihar");
+            $to[] = array("email" => "kpanse@cisco.com", "name" => "krishnaji Panse");
+        $from = "support@rjilauto.com";
+        $from_name = "RJILAuto Team";
+            $subject = "Penalty Point report from $fromDate to $toDate";
+            $message = "Dear All<br/>";
+            $message .= "<p></p>";
+            $message .= "<p style='padding-left:5em '>Please find attached the report for penalty point for all devices for the period of $fromDate to $toDate</p>";
+            $message .= "<p>From,<br/>RJIL Auto Team<p/>";
+            $message .= "<p>***This is an auto generated email. PLEASE DO NOT REPLY TO THIS EMAIL.***</p>";
+            $isSent = CommonUtility::sendmailWithAttachment($to, "Prashant", $from, $from_name, $subject, $message, $attachment_path, $file_name, $cc = '');
+
+            var_dump($isSent);
+            if ($isSent) {
+                echo "Mail Sent successfully";
+            } else {
+                echo "Mail Not Sent";
+            };
+    }
+    }
+
+    public static function getEnvironmentPenalty() {
+        $db = Yii::$app->db_rjil;
+        $sql = "select nip_vs_showrun,loopback0,syslog from built_environment_condition_penalty WHERE date(created_at)=date(now())";
+        $command = $db->createCommand($sql);
+        $nipvsshowrunData = $command->queryAll();
+        $auditPenalty = 0;
+        $data = array();
+        if (!empty($nipvsshowrunData)) {
+            foreach ($nipvsshowrunData as $nipvsshowrunDat) {
+                if (!empty($nipvsshowrunDat)) {
+                    $data[$nipvsshowrunDat['loopback0']] = ['nip_vs_showrun' => $nipvsshowrunDat['nip_vs_showrun'], 'syslog' => $nipvsshowrunDat['syslog']];
+                }
+            }
+        }
+        return $data;
+    }
+
+    public static function getDevicePerformance() {
+        $db = Yii::$app->db_rjil;
+        $sql = "SELECT `hostname`, `buffer_consumption`, `cpu_utilization`, `memory_utilization`, `core_dump` FROM `device_performance` WHERE `hostname`!='' AND date(created_date)=date(now()) group by `hostname`";
+        $device_performance_points = $db->createCommand($sql)->queryAll();
+        $data = array();
+        if (!empty($device_performance_points)) {
+            foreach ($device_performance_points as $value) {
+                $data[$value['hostname']]['buffer_consumption'] = $value['buffer_consumption'];
+                $data[$value['hostname']]['cpu_utilization'] = $value['cpu_utilization'];
+                $data[$value['hostname']]['memory_utilization'] = $value['memory_utilization'];
+                $data[$value['hostname']]['core_dump'] = $value['core_dump'];
+}
+        }
+        return $data;
+    }
+
+    public static function CreateZip($fileName) {
+        echo "fileName=" . $fileName;
+        ini_set('max_execution_time', 86400);
+        $output = array();
+        @exec("cd /var/www/html/deepdive && zip -r {$fileName} uploads", $output);
+        if (!empty($output)) {
+            print_r($output);
         }
     }
 

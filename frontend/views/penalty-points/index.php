@@ -63,7 +63,7 @@ Modal::end();
     <?php
     \yii\widgets\Pjax::begin(['id' => 'penlaty',
         'timeout' => false,
-        'enablePushState' => false,
+        'enablePushState' => TRUE,
         'clientOptions' => ['method' => 'POST']]);
     $gridColumns = [
         ['class' => 'kartik\grid\SerialColumn'],
@@ -177,12 +177,12 @@ Modal::end();
     ?>
 
     <div style="padding-top: 50px;padding-left: 10px;position: absolute;"> <?=
-    ExportMenu::widget([
-        'dataProvider' => $export,
-        'filterModel' => $searchModel,
-        'columns' => $gridColumns,
-    ]);
-    ?></div>
+        ExportMenu::widget([
+            'dataProvider' => $export,
+            'filterModel' => $searchModel,
+            'columns' => $gridColumns,
+        ]);
+        ?></div>
 
     <?=
     GridView::widget([
@@ -191,12 +191,12 @@ Modal::end();
         'containerOptions' => ['style' => 'overflow: auto'],
         'headerRowOptions' => ['class' => 'kartik-sheet-style'],
         'filterRowOptions' => ['class' => 'kartik-sheet-style'],
-        'pjax' => true,
-        'bordered' => true,
-        'striped' => false,
-        'condensed' => false,
-        'responsive' => true,
-        'hover' => true,
+//        'pjax' => true,
+//        'bordered' => true,
+//        'striped' => false,
+//        'condensed' => false,
+//        'responsive' => true,
+//        'hover' => true,
 //        'floatHeader' => true,
 //        'floatHeaderOptions' => ['scrollingTop' => 1],
         'panel' => [

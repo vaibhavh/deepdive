@@ -21,21 +21,19 @@ use Yii;
  * @property integer $is_deleted
  * @property integer $is_active
  */
-class PenaltyPointMaster extends \yii\db\ActiveRecord
-{
+class PenaltyPointMaster extends \yii\db\ActiveRecord {
+
     /**
      * @inheritdoc
      */
-    public static function tableName()
-    {
+    public static function tableName() {
         return 'penaltypointmaster';
     }
 
     /**
      * @inheritdoc
      */
-    public function rules()
-    {
+    public function rules() {
         return [
             [['section', 'device_type', 'subsection', 'rule', 'frequency', 'points', 'created_at', 'modified_at', 'created_by', 'modified_by', 'is_deleted', 'is_active'], 'required'],
             [['points', 'created_by', 'modified_by', 'is_deleted', 'is_active'], 'integer'],
@@ -48,8 +46,7 @@ class PenaltyPointMaster extends \yii\db\ActiveRecord
     /**
      * @inheritdoc
      */
-    public function attributeLabels()
-    {
+    public function attributeLabels() {
         return [
             'id' => 'ID',
             'section' => 'Section',
@@ -68,29 +65,27 @@ class PenaltyPointMaster extends \yii\db\ActiveRecord
     }
 
     public function saveToMongoDb($data) {
-        if(!empty($data['PenaltyPointMaster']))
-        {
+        if (!empty($data['PenaltyPointMaster'])) {
             $myData = $data['PenaltyPointMaster'];
             $myData['created_at'] = date("Y/m/d h:i:s");
             $myData['modified_at'] = date("Y/m/d h:i:s");
             $myData['created_by'] = Yii::$app->user->identity->id;
             $myData['modified_by'] = Yii::$app->user->identity->id;
-            $myData['is_deleted'] = '0'; 
+            $myData['is_deleted'] = '0';
             //$myData['is_active'] = '1';
             $connection = new \MongoClient(Yii::$app->mongodb->dsn);
             $database = $connection->deepdive;
             $collection = $database->penaltyPointMaster;
             $collection->insert($myData);
-            Yii::$app->session->setFlash('success','Record Created Successfully!!!');
+            Yii::$app->session->setFlash('success', 'Record Created Successfully!!!');
             return $myData;
         }
         //Yii::$app->session->setFlash('error','Failed to create the record');
         return false;
     }
-    
+
     public function updateToMongoDb($id, $data) {
-        if(!empty($data['PenaltyPointMaster']))
-        {
+        if (!empty($data['PenaltyPointMaster'])) {
             $model = self::mongoDbFindOne($id);
             $idObject = new \MongoId($id);
             $myData = $data['PenaltyPointMaster'];
@@ -104,15 +99,14 @@ class PenaltyPointMaster extends \yii\db\ActiveRecord
             $database = $connection->deepdive;
             $collection = $database->penaltyPointMaster;
             $collection->save($myData);
-            Yii::$app->session->setFlash('success','Record Updated Successfully!!!');
+            Yii::$app->session->setFlash('success', 'Record Updated Successfully!!!');
             return $myData;
         }
         //Yii::$app->session->setFlash('error','Failed to update the record');
         return false;
     }
-    
-    public function deleteFromMongoDb($id)
-    {
+
+    public function deleteFromMongoDb($id) {
         $myDataObj = self::mongoDbFindOne($id);
         $myData = $myDataObj->attributes;
         $idObject = new \MongoId($id);
@@ -125,14 +119,13 @@ class PenaltyPointMaster extends \yii\db\ActiveRecord
         $database = $connection->deepdive;
         $collection = $database->penaltyPointMaster;
         $collection->save($myData);
-        Yii::$app->session->setFlash('success','Record Deleted Successfully!!!');
+        Yii::$app->session->setFlash('success', 'Record Deleted Successfully!!!');
         return true;
     }
-    
+
     public function mongoDbFindOne($id) {
         $model = new PenaltyPointMaster();
-        if(!empty($id))
-        {
+        if (!empty($id)) {
             $idObject = new \MongoId($id);
             $connection = new \MongoClient(Yii::$app->mongodb->dsn);
             $database = $connection->deepdive;
@@ -144,6 +137,5 @@ class PenaltyPointMaster extends \yii\db\ActiveRecord
         }
         return false;
     }
-    
-    
+
 }

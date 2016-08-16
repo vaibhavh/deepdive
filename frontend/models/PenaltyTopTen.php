@@ -165,11 +165,14 @@ class PenaltyTopTen extends Model {
 
         $pipeline[]['$group'] = [
             '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
+            'hostname' => ['$first' => '$hostname'],
+            'loopback0' => ['$first' => '$loopback0'],
+            'sapid' => ['$first' => '$sapid'],
+            'device_type' => ['$first' => '$device_type'],
             'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
             'bgp_available' => ['$sum' => '$bgp_available'],
             'isis_available' => ['$sum' => '$isis_available'],
             'resilent_status' => ['$sum' => '$resilent_status'],
-            'device_type' => ['$first' => '$device_type'],
             'crc' => ['$sum' => '$crc'],
             'input_errors' => ['$sum' => '$input_errors'],
             'output_errors' => ['$sum' => '$output_errors'],
@@ -180,8 +183,17 @@ class PenaltyTopTen extends Model {
             'audit_penalty' => ['$sum' => '$audit_penalty'],
             'latency' => ['$sum' => '$latency'],
             'module_temperature' => ['$sum' => '$module_temperature'],
-            'sapid' => ['$first' => '$sapid'],
-            'total' => ['$sum' => ['$add' => ['$ios_compliance_status', '$bgp_available', '$isis_available', '$resilent_status', '$crc', '$input_errors', '$output_errors', '$power', '$optical_power', '$packetloss', '$audit_penalty', '$latency', '$module_temperature']]],
+            'isis_stability_changed' => ['$sum' => '$isis_stability_changed'],
+            'ldp_stability_changed' => ['$sum' => '$ldp_stability_changed'],
+            'bfd_stability_changed' => ['$sum' => '$bfd_stability_changed'],
+            'bgp_stability_changed' => ['$sum' => '$bgp_stability_changed'],
+            'device_stability' => ['$sum' => '$device_stability'],
+            'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
+            'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
+            'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
+            'total' => ['$sum' => ['$add' => ['$ios_compliance_status', '$bgp_available', '$isis_available', '$resilent_status', '$crc', '$input_errors', '$output_errors', '$power', '$optical_power', '$packetloss', '$audit_penalty', '$latency', '$module_temperature',
+                        '$isis_stability_changed', '$ldp_stability_changed', '$bfd_stability_changed', '$bgp_stability_changed', '$device_stability', '$pvb_priority_1',
+                        '$pvb_priority_2', '$pvb_priority_3']]],
         ];
         $options = ['allowDiskUse' => true];
         $data = $collection->aggregate($pipeline);
@@ -223,8 +235,6 @@ class PenaltyTopTen extends Model {
                     }
                 }
             }
-        } else {
-            Yii::$app->session->setFlash('error', 'No Data Found!');
         }
         return $topTenDevices;
     }
@@ -252,11 +262,14 @@ class PenaltyTopTen extends Model {
 
         $pipeline[]['$group'] = [
             '_id' => ['hostname' => '$hostname', 'loopback0' => '$loopback0'],
+            'hostname' => ['$first' => '$hostname'],
+            'loopback0' => ['$first' => '$loopback0'],
+            'sapid' => ['$first' => '$sapid'],
+            'device_type' => ['$first' => '$device_type'],
             'ios_compliance_status' => ['$sum' => '$ios_compliance_status'],
             'bgp_available' => ['$sum' => '$bgp_available'],
             'isis_available' => ['$sum' => '$isis_available'],
             'resilent_status' => ['$sum' => '$resilent_status'],
-            'device_type' => ['$first' => '$device_type'],
             'crc' => ['$sum' => '$crc'],
             'input_errors' => ['$sum' => '$input_errors'],
             'output_errors' => ['$sum' => '$output_errors'],
@@ -267,8 +280,17 @@ class PenaltyTopTen extends Model {
             'audit_penalty' => ['$sum' => '$audit_penalty'],
             'latency' => ['$sum' => '$latency'],
             'module_temperature' => ['$sum' => '$module_temperature'],
-            'sapid' => ['$first' => '$sapid'],
-            'total' => ['$sum' => ['$add' => ['$ios_compliance_status', '$bgp_available', '$isis_available', '$resilent_status', '$crc', '$input_errors', '$output_errors', '$power', '$optical_power', '$packetloss', '$audit_penalty', '$latency', '$module_temperature']]],
+            'isis_stability_changed' => ['$sum' => '$isis_stability_changed'],
+            'ldp_stability_changed' => ['$sum' => '$ldp_stability_changed'],
+            'bfd_stability_changed' => ['$sum' => '$bfd_stability_changed'],
+            'bgp_stability_changed' => ['$sum' => '$bgp_stability_changed'],
+            'device_stability' => ['$sum' => '$device_stability'],
+            'pvb_priority_1' => ['$sum' => '$pvb_priority_1'],
+            'pvb_priority_2' => ['$sum' => '$pvb_priority_2'],
+            'pvb_priority_3' => ['$sum' => '$pvb_priority_3'],
+            'total' => ['$sum' => ['$add' => ['$ios_compliance_status', '$bgp_available', '$isis_available', '$resilent_status', '$crc', '$input_errors', '$output_errors', '$power', '$optical_power', '$packetloss', '$audit_penalty', '$latency', '$module_temperature',
+                        '$isis_stability_changed', '$ldp_stability_changed', '$bfd_stability_changed', '$bgp_stability_changed', '$device_stability', '$pvb_priority_1',
+                        '$pvb_priority_2', '$pvb_priority_3']]],
         ];
         $options = ['allowDiskUse' => true];
         $data = $collection->aggregate($pipeline);
@@ -305,8 +327,6 @@ class PenaltyTopTen extends Model {
                     }
                 }
             }
-        } else {
-            Yii::$app->session->setFlash('error', 'No Data Found!');
         }
         return $topTenDevices;
     }
